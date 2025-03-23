@@ -58,9 +58,9 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
+    keys = pygame.key.get_pressed()
     # Continuously jump. If the player is not jumping, initialize a new jump
-    if is_jumping is False:
+    if keys[pygame.K_SPACE] and player.bottom >= settings.screen_height:
         # Jumping means that the player is going up. The top of the 
         # screen is y=0, and the bottom is y=SCREEN_HEIGHT. So, to go up,
         # we need to have a negative y velocity

@@ -49,13 +49,13 @@ def main():
         keys = pygame.key.get_pressed()
 
         # Move the square based on arrow keys
-        if keys[pygame.K_LEFT]:
+        if keys[pygame.K_a]:
             square_x -= SQUARE_SPEED
-        if keys[pygame.K_RIGHT]:
+        if keys[pygame.K_d]:
             square_x += SQUARE_SPEED
-        if keys[pygame.K_UP]:
+        if keys[pygame.K_w]:
             square_y -= SQUARE_SPEED
-        if keys[pygame.K_DOWN]:
+        if keys[pygame.K_s]:
             square_y += SQUARE_SPEED
 
         # Prevent the square from going off the screen
