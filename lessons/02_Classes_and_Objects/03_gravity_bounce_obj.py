@@ -15,6 +15,7 @@ class Colors:
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     RED = (255, 0, 0)
+    PURPLE = (127, 0, 255)
 
 
 class GameSettings:
@@ -22,10 +23,6 @@ class GameSettings:
     width: int = 500
     height: int = 500
     gravity: float = 0.3
-    player_start_x: int = 100
-    player_start_y: int = None
-    player_v_y: float = 0  # Initial y velocity
-    player_v_x: float = 7  # Initial x velocity
     player_width: int = 20
     player_height: int = 20
     player_jump_velocity: float = 15
@@ -74,7 +71,7 @@ class Game:
 class Player:
     """Player class, just a bouncing rectangle"""
 
-    def __init__(self, game: Game):
+    def __init__(self, color: tuple, x_pos: int, y_pos: int, x_velo: int, y_velo: int, game: Game):
         self.game = game
         settings = game.settings
 
@@ -84,11 +81,13 @@ class Player:
         self.is_jumping = False
         self.v_jump = settings.player_jump_velocity
 
-        self.y = settings.player_start_y if settings.player_start_y is not None else settings.height - self.height
-        self.x = settings.player_start_x
+        self.y = y_pos
+        self.x = x_pos
         
-        self.v_x = settings.player_v_x  # X Velocity
-        self.v_y = settings.player_v_y  # Y Velocity
+        self.v_x = x_velo  # X Velocity
+        self.v_y = y_velo  # Y Velocity
+
+        self.color = color
 
     def update(self):
         """Update player position, continuously jumping"""
@@ -125,13 +124,13 @@ class Player:
             self.is_jumping = True
 
     def draw(self, screen):
-        pygame.draw.rect(screen, Colors.BLACK, (self.x, self.y, self.width, self.height))
+        pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height))
 
 
 settings = GameSettings()
 game = Game(settings)
 
-p1 = Player(game)
+p1 = Player(Colors.PURPLE, 100, 100, 10, 10, game)
 game.add_player(p1)
 
 
