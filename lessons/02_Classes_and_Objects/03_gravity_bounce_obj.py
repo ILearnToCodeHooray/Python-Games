@@ -131,7 +131,9 @@ settings = GameSettings()
 game = Game(settings)
 
 p1 = Player(Colors.PURPLE, 100, 100, 10, 10, game)
+p2 = Player(Colors.RED, 150, 150, 20, 20, game)
 game.add_player(p1)
+game.add_player(p2)
 
 
 game.run()

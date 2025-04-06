@@ -160,7 +160,9 @@ class Player:
         
         if (self.at_left() and self.going_left() ) or ( self.at_right() and self.going_right()):
             self.vel.x = -self.vel.x
-            
+
+        drag = -self.vel * 0.1
+        self.vel += drag
     def update_pos(self):
         """Update the player's position based on velocity"""
         self.pos += self.vel  # Update the player's position based on the current velocity
@@ -181,7 +183,6 @@ class Player:
         # Don't let the player go off the right side of the screen
         elif self.at_right():
             self.pos.x = self.game.settings.width - self.width
-
     def update_jump(self):
         """Handle the player's jumping logic"""
         
@@ -189,6 +190,7 @@ class Player:
         # check if the player is at the bottom. 
         if self.at_bottom():
             self.vel += self.v_jump
+
          
 
     def draw(self, screen):
