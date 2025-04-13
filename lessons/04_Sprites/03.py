@@ -80,6 +80,8 @@ class Spaceship(pygame.sprite.Sprite):
         # need to add the projectile to the group to make sure it is updated.
         self.game.add(new_projectile)
 
+    
+
 
     # The Sprite class defines an update method that is called every frame. We
     # can override this method to add our own functionality. In this case, we
