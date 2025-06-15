@@ -48,6 +48,15 @@ class Parent(Person):
             print("Their names are:")
             for child in self.children:
                 print(f"  {child.name} {child.age}")
+
+    def name_family(self):
+        print("My name is:")
+        print(self.name)
+        print("My spouses name is:")
+        print(self.spouse.name)
+        print("My children's names are:")
+        for child in self.children:
+            print(child.name)
                 
                 
 class Child(Person):
@@ -65,8 +74,8 @@ class Child(Person):
         
         
 # Now lets make a family
-mom = Parent("Alice", "bob", 35)
-dad = Parent("Bob", "bob", 40, mom)
+mom = Parent("Alice", 35, "bob")
+dad = Parent("Bob", 40, "bob", mom)
 
 charlie = Child("Charlie", "bob", 10, [mom, dad])
 dahlia = Child("Dahlia", "bob", 8, [mom, dad])
@@ -81,3 +90,4 @@ dad.add_child(dahlia)
 mom.say_hello("Hello!") # Call the say_hello method of the mom object
 print()
 dahlia.say_hello("Yo!")
+mom.name_family()

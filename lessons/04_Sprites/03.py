@@ -28,7 +28,7 @@ class Spaceship(pygame.sprite.Sprite):
     def __init__(self, settings, position):
         super().__init__()
 
-        self.game = None  # will be set in Game.add()
+        self.game = None # will be set in Game.add()
         self.settings = settings
 
         self.angle = 0
