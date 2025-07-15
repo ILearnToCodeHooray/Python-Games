@@ -39,7 +39,7 @@ class Settings:
 
         # Obstacle attributes
         obstacle_width= 20
-        obstacle_height = 20
+        obstacle_height = 40
         obstacle_speed = 5
         obstacle_x = 0
 
@@ -53,15 +53,16 @@ class Obstacle(pygame.sprite.Sprite):
     def __init__(self, settings):
         super().__init__()
         self.settings = settings
-        self.image = pygame.Surface((self.settings.obstacle_width, self.settings.obstacle_height))
-        self.image.fill(self.settings.colors['black'])
+        cactus_image = pygame.image.load(images_dir / "cactus_9.png").convert_alpha()
+        self.image = pygame.transform.scale(cactus_image, (self.settings.obstacle_width, self.settings.obstacle_height))
         self.rect = self.image.get_rect()
         self.rect.x = Settings.width
         Settings.obstacle_x = Settings.width
-        self.rect.y = Settings.height - Settings.obstacle_height - 10
-
+        self.rect.y = Settings.height - Settings.obstacle_height
+        self.scored = False
         self.explosion = pygame.image.load(images_dir / "explosion1.gif")
         self.alive = True
+        self.collided = False
 
     def update(self):
         self.rect.x -= Settings.obstacle_speed
@@ -85,38 +86,39 @@ class Obstacle(pygame.sprite.Sprite):
 class Player(pygame.sprite.Sprite):
     def __init__(self, Settings):
         super().__init__()
-        self.image = pygame.Surface((Settings.size, Settings.size))
-        self.image.fill(Settings.colors['blue'])
+        dino_image = pygame.image.load(images_dir / "dino_0.png").convert_alpha()
+        self.image = pygame.transform.scale(dino_image, (Settings.size, Settings.size))
         self.rect = self.image.get_rect()
         self.rect.x = 50
         self.rect.y = Settings.height - Settings.size - 10
-        self.jump = False
-        Settings.speed = Settings.speed
+
+        # Jump variables
+        self.velocity = 0
+        self.gravity = 1
+        self.jump_strength = -15
+        self.is_jumping = False
 
     def update(self):
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_SPACE] and self.can_jump == True:
-            self.jump = True
 
+        if keys[pygame.K_SPACE] and not self.is_jumping:
+            self.velocity = self.jump_strength
+            self.is_jumping = True
 
-        if self.jump == True:
-            self.rect.y -= Settings.speed
-            if self.rect.y < 200:
-                self.jump = False
-        else:
-            self.rect.y += Settings.speed
-        # Keep the player on screen
-        if self.rect.top < 0:
-            self.rect.top = 0
-        if self.rect.bottom > Settings.height:
-            self.can_jump = True
+        # Apply gravity
+        self.velocity += self.gravity
+        self.rect.y += self.velocity
+
+        # Prevent falling below ground
+        if self.rect.bottom >= Settings.height:
             self.rect.bottom = Settings.height
-        else:
-            self.can_jump = False
+            self.velocity = 0
+            self.is_jumping = False
+
 
 # Create a player object
-player = Player(Settings)
-player_group = pygame.sprite.GroupSingle(player)
+player = Player(Settings)  # ✅ create an instance
+player_group = pygame.sprite.GroupSingle(Player)  # ✅ pass the instance
 
 # Add obstacles periodically
 def add_obstacle(obstacles):
@@ -165,17 +167,22 @@ class Loop(pygame.sprite.Sprite, Settings, Player, Obstacle):
 
             # Check for collisions
             
-            for i in range(0, len(obstacles.sprites())-1):
-                if obstacles.sprites()[i].rect.x < 50:
+            for obstacle in obstacles:
+                if not obstacle.scored and not obstacle.collided and obstacle.rect.right < player.rect.left:
                     Settings.score += 1
-                    obstacles.sprites()[i].kill()
+                    obstacle.scored = True
+
+
             
             collider = pygame.sprite.spritecollide(player, obstacles, dokill=False)
-            if collider:
-                collider[0].explode()
+            for obstacle in collider:
+                if not obstacle.collided:
+                    obstacle.collided = True
+                    obstacle.explode()
+
             # Draw everything
             Settings.screen.fill(Settings.colors['white'])
-            pygame.draw.rect(Settings.screen, Settings.colors['blue'], player)
+            player_group.draw(Settings.screen)
             obstacles.draw(Settings.screen)
 
             # Display obstacle count
