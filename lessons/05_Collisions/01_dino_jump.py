@@ -78,7 +78,8 @@ class Obstacle(pygame.sprite.Sprite):
         self.image = self.explosion
         self.image = pygame.transform.scale(self.image, (Settings.obstacle_width, Settings.obstacle_height))
         self.rect = self.image.get_rect(center=self.rect.center)
-        
+
+
         
 
 
@@ -117,8 +118,8 @@ class Player(pygame.sprite.Sprite):
 
 
 # Create a player object
-player = Player(Settings)  # ✅ create an instance
-player_group = pygame.sprite.GroupSingle(Player)  # ✅ pass the instance
+player = Player(Settings)
+player_group = pygame.sprite.Group(player)
 
 # Add obstacles periodically
 def add_obstacle(obstacles):
@@ -145,8 +146,6 @@ class Loop(pygame.sprite.Sprite, Settings, Player, Obstacle):
 
         # Group for obstacles
         obstacles = pygame.sprite.Group()
-
-        player = Player(Settings)
 
         obstacle_count = 0
 
@@ -179,6 +178,9 @@ class Loop(pygame.sprite.Sprite, Settings, Player, Obstacle):
                 if not obstacle.collided:
                     obstacle.collided = True
                     obstacle.explode()
+                    game_over = True
+
+            
 
             # Draw everything
             Settings.screen.fill(Settings.colors['white'])
@@ -195,7 +197,10 @@ class Loop(pygame.sprite.Sprite, Settings, Player, Obstacle):
             clock.tick(Settings.fps)
 
         # Game over screen
-        Settings.screen.fill(Settings.colors['white'])
-
+        
+        while game_over:
+            Settings.screen.fill(Settings.colors['white'])
+            game_over_img = pygame.transform.scale(pygame.image.load(images_dir / "game_over_screen.png").convert_alpha(), (200, 200))
+            game_over_sprite = game_over_img.get_rect
 
     game_loop(Settings)
