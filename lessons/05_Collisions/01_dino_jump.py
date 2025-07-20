@@ -136,12 +136,24 @@ def add_obstacle(obstacles):
         return 1
     return 0
 
+class Game_Over(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        gm_ovr_img = pygame.image.load(images_dir / "game_over_screen.png").convert_alpha()
+        self.image = pygame.transform.scale(gm_ovr_img, (200, 200))
+        self.rect = self.image.get_rect()
+        self.rect.x = 0
+        self.rect.y = 0
 
+game_over_screen = Game_Over()
+game_over_group = pygame.sprite.Group(game_over_screen)
 # Main game loop
-class Loop(pygame.sprite.Sprite, Settings, Player, Obstacle):
-    def game_loop(Settings):
+class Loop(Player, Obstacle):
+    def __init__(self, Player, Obstacle):
+        self.game_over = False
+        self.game_loop( Settings)
+    def game_loop(self,Settings):
         clock = pygame.time.Clock()
-        game_over = False
         last_obstacle_time = pygame.time.get_ticks()
 
         # Group for obstacles
@@ -149,11 +161,11 @@ class Loop(pygame.sprite.Sprite, Settings, Player, Obstacle):
 
         obstacle_count = 0
 
-        while not game_over:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
+        while not self.game_over:
+            # for event in pygame.event.get():
+                # if event.type == pygame.QUIT:
+                    #pygame.quit()
+                    #quit()
 
             # Update player
             player.update()
@@ -178,15 +190,13 @@ class Loop(pygame.sprite.Sprite, Settings, Player, Obstacle):
                 if not obstacle.collided:
                     obstacle.collided = True
                     obstacle.explode()
-                    game_over = True
-
-            
+                    self.game_over = True
 
             # Draw everything
             Settings.screen.fill(Settings.colors['white'])
             player_group.draw(Settings.screen)
             obstacles.draw(Settings.screen)
-
+            
             # Display obstacle count
             obstacle_text = Settings.font.render(f"Obstacles: {obstacle_count}", True, Settings.colors['black'])
             Settings.screen.blit(obstacle_text, (10, 10))
@@ -195,12 +205,20 @@ class Loop(pygame.sprite.Sprite, Settings, Player, Obstacle):
             Settings.screen.blit(score_text, (300, 10))
             pygame.display.update()
             clock.tick(Settings.fps)
+        else:
+             while True:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        return  # Exit the loop and game
 
+                Settings.screen.fill(Settings.colors['white'])
+                game_over_group.draw(Settings.screen)
+                pygame.display.update()
+                clock.tick(Settings.fps)
+                if pygame.key.get_pressed()[pygame.K_SPACE]:
+                    self.game_over = False
+                    game_loop = Loop(Player,Obstacle)
+            
         # Game over screen
-        
-        while game_over:
-            Settings.screen.fill(Settings.colors['white'])
-            game_over_img = pygame.transform.scale(pygame.image.load(images_dir / "game_over_screen.png").convert_alpha(), (200, 200))
-            game_over_sprite = game_over_img.get_rect
-
-    game_loop(Settings)
+game_loop = Loop(Player, Obstacle)
