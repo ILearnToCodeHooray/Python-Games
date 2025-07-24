@@ -100,12 +100,6 @@ class Player(pygame.sprite.Sprite):
         self.is_jumping = False
 
     def update(self):
-        keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_SPACE] and not self.is_jumping:
-            self.velocity = self.jump_strength
-            self.is_jumping = True
-
         # Apply gravity
         self.velocity += self.gravity
         self.rect.y += self.velocity
@@ -115,6 +109,7 @@ class Player(pygame.sprite.Sprite):
             self.rect.bottom = Settings.height
             self.velocity = 0
             self.is_jumping = False
+
 
 
 # Create a player object
@@ -151,7 +146,8 @@ game_over_group = pygame.sprite.Group(game_over_screen)
 class Loop(Player, Obstacle):
     def __init__(self, Player, Obstacle):
         self.game_over = False
-        self.game_loop( Settings)
+        self.high_score = 0
+        self.game_loop(Settings)
     def game_loop(self,Settings):
         clock = pygame.time.Clock()
         last_obstacle_time = pygame.time.get_ticks()
@@ -162,10 +158,15 @@ class Loop(Player, Obstacle):
         obstacle_count = 0
 
         while not self.game_over:
-            # for event in pygame.event.get():
-                # if event.type == pygame.QUIT:
-                    #pygame.quit()
-                    #quit()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE and not player.is_jumping:
+                        player.velocity = player.jump_strength
+                        player.is_jumping = True
+
 
             # Update player
             player.update()
@@ -191,6 +192,8 @@ class Loop(Player, Obstacle):
                     obstacle.collided = True
                     obstacle.explode()
                     self.game_over = True
+                    if Settings.score > self.high_score:
+                        self.high_score = Settings.score
 
             # Draw everything
             Settings.screen.fill(Settings.colors['white'])
@@ -206,19 +209,37 @@ class Loop(Player, Obstacle):
             pygame.display.update()
             clock.tick(Settings.fps)
         else:
-             while True:
+            while True:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         pygame.quit()
-                        return  # Exit the loop and game
+                        return
+
+                    if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                        # Reset game state
+                        Settings.score = 0
+                        player.rect.y = Settings.height - Settings.size - 10
+                        player.velocity = 0
+                        player.is_jumping = False
+                        self.game_over = False
+                        self.game_loop(Settings)
+                        return  # Exit this restart loop when game restarts
 
                 Settings.screen.fill(Settings.colors['white'])
                 game_over_group.draw(Settings.screen)
+
+                # Draw the final score and high score here
+                score_text = Settings.font.render(f"Score: {Settings.score}", True, Settings.colors['black'])
+                high_score_text = Settings.font.render(f"High Score: {self.high_score}", True, Settings.colors['black'])
+                press_space_text = Settings.font.render("Press space to restart", True, Settings.colors['black'])
+                Settings.screen.blit(score_text, (200, 220))
+                Settings.screen.blit(high_score_text, (200, 250))
+                Settings.screen.blit(press_space_text, (200, 190))
+
                 pygame.display.update()
                 clock.tick(Settings.fps)
-                if pygame.key.get_pressed()[pygame.K_SPACE]:
-                    self.game_over = False
-                    game_loop = Loop(Player,Obstacle)
+
+
             
         # Game over screen
 game_loop = Loop(Player, Obstacle)
