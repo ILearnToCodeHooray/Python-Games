@@ -19,7 +19,7 @@ images_dir = Path(__file__).parent / "images" if (Path(__file__).parent / "image
 class Settings:
         width = 600
         height = 300
-        screen = pygame.display.set_mode((width, height))
+        screen = pygame.display.set_mode((width, 600))
         pygame.display.set_caption("Dino Jump")
 
         # Colors
@@ -80,10 +80,7 @@ class Obstacle(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=self.rect.center)
 
 
-        
 
-
-# Define a player class
 class Player(pygame.sprite.Sprite):
     def __init__(self, Settings):
         super().__init__()
@@ -142,6 +139,7 @@ class Game_Over(pygame.sprite.Sprite):
 
 game_over_screen = Game_Over()
 game_over_group = pygame.sprite.Group(game_over_screen)
+
 # Main game loop
 class Loop(Player, Obstacle):
     def __init__(self, Player, Obstacle):
@@ -170,6 +168,7 @@ class Loop(Player, Obstacle):
 
             # Update player
             player.update()
+            
 
             # Add obstacles and update
             if pygame.time.get_ticks() - last_obstacle_time > 500:
@@ -199,7 +198,8 @@ class Loop(Player, Obstacle):
             Settings.screen.fill(Settings.colors['white'])
             player_group.draw(Settings.screen)
             obstacles.draw(Settings.screen)
-            
+            pygame.draw.rect(Settings.screen, Settings.colors['blue'], (0, 300, 1000, 500))
+
             # Display obstacle count
             obstacle_text = Settings.font.render(f"Obstacles: {obstacle_count}", True, Settings.colors['black'])
             Settings.screen.blit(obstacle_text, (10, 10))
@@ -208,6 +208,7 @@ class Loop(Player, Obstacle):
             Settings.screen.blit(score_text, (300, 10))
             pygame.display.update()
             clock.tick(Settings.fps)
+
         else:
             while True:
                 for event in pygame.event.get():
