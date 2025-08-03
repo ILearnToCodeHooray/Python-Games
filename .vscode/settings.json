@@ -1,3 +1,10 @@
 {
-    "python.createEnvironment.trigger": "off"
+    "python.createEnvironment.trigger": "off",
+    "python-envs.pythonProjects": [
+        {
+            "path": "lessons/06_Surfaces",
+            "envManager": "ms-python.python:venv",
+            "packageManager": "ms-python.python:pip"
+        }
+    ]
 }
