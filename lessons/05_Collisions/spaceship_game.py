@@ -149,22 +149,40 @@ class Game_Over(pygame.sprite.Sprite):
 
 game_over_screen = Game_Over()
 game_over_group = pygame.sprite.Group(game_over_screen)
-class Laser():
-    def __init__(self, Player):
-        self.laser_x = Player.rect.x
-        self.laser_y = 0
+class Laser(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.laser_x = x
+        self.laser_y = y
+        self.width = 20
+        self.height = 10
+        self.speed = 10
+        self.color = Settings.colors['red']
+        self.rect = pygame.Rect(self.laser_x, self.laser_y, self.width, self.height)
+
+    def update(self):
+        self.laser_x += self.speed
+        self.rect.x = self.laser_x
+        if self.laser_x > Settings.width:
+            self.kill()  # Remove from group when off screen
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.color, self.rect)
+
 # Main game
 # loop
 class Loop():
-    def __init__(self, Player, Obstacle, Laser):
+    def __init__(self):
         self.game_over = False
         self.high_score = 0
         self.shooting = False
         self.game_loop(Settings)
+        
     def game_loop(self, Settings):
         clock = pygame.time.Clock()
         last_obstacle_time = pygame.time.get_ticks()
-
+        
+        self.lasers = pygame.sprite.Group()
         # Group for obstacles
         obstacles = pygame.sprite.Group()
 
@@ -180,8 +198,10 @@ class Loop():
                         player.velocity = player.jump_strength
                         player.is_jumping = True
                     if event.key == pygame.K_l:
-                        Laser.laser_y = player.rect.y
+                        laser = Laser(player.rect.right, player.rect.y + Settings.size // 2)
+                        self.lasers.add(laser)
                         self.shooting = True
+
                         
 
 
@@ -194,7 +214,7 @@ class Loop():
                 last_obstacle_time = pygame.time.get_ticks()
                 obstacle_count += add_obstacle(obstacles)
             obstacles.update()
-
+            self.lasers.update()
             # Check for collisions
             
             for obstacle in obstacles:
@@ -212,18 +232,21 @@ class Loop():
                     self.game_over = True
                     if Settings.score > self.high_score:
                         self.high_score = Settings.score
+            laser_collider = pygame.sprite.groupcollide(obstacles, self.lasers, dokilla=True, dokillb=True)
+            for obstacle in laser_collider:
+                if laser_collider:
+                    Settings.score = Settings.score + 1
+                    
+                    
             # Draw everything
             Settings.screen.fill(Settings.colors['white'])
             player_group.draw(Settings.screen)
             obstacles.draw(Settings.screen)
             pygame.draw.rect(Settings.screen, Settings.colors['blue'], (0, 300, 1000, 500))
-            if self.shooting == True:
-                pygame.draw.rect(Settings.screen, Settings.colors['red'], (Laser.laser_x, Laser.laser_y, 20, 10))
-                Laser.laser_x = Laser.laser_x + 10
-                if Laser.laser_x > Settings.width:
-                    self.shooting = False
-                    Laser.laser_x = 50
-                    
+            
+            for laser in self.lasers:
+                pygame.draw.rect(Settings.screen, Settings.colors['red'], (laser.laser_x, laser.laser_y, 20, 10))
+
 
             # Display obstacle count
             obstacle_text = Settings.font.render(f"Obstacles: {obstacle_count}", True, Settings.colors['black'])
@@ -268,4 +291,4 @@ class Loop():
 
             
         # Game over screen
-game_loop = Loop(Player, Obstacle, Laser)
+game_loop = Loop()
