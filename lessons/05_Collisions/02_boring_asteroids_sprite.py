@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 from pathlib import Path
 
 assets = Path(__file__).parent / "images"
@@ -14,7 +15,7 @@ class Settings:
     projectile_speed = 5 
     projectile_size = 11
     shoot_delay = 250  # 250 milliseconds between shots, or 4 shots per second
-    colors = {"white": (255, 255, 255), "black": (0, 0, 0), "red": (255, 0, 0)}
+    colors = {"white": (255, 255, 255), "black": (0, 0, 0), "red": (255, 0, 0), "gray": (128, 128, 128)}
 
 
 # Notice that this Spaceship class is a bit different: it is a subclass of
@@ -22,6 +23,7 @@ class Settings:
 # inherits from the Sprite class. The main additional function of a Sprite is
 # that it can be added and removed from groups. This is useful for handling
 # multiple objects of the same type, like projectiles.
+
 class Spaceship(pygame.sprite.Sprite):
     """Class representing the spaceship."""
 
@@ -139,7 +141,28 @@ class AlienSpaceship(Spaceship):
         
         return pygame.image.load(assets/'alien1.gif')
         
+class Asteroid(pygame.sprite.Sprite):
+    def __init__(self, settings,position, velocity, angle):
+        super().__init__()
+        self.velocity = pygame.Vector2(0, -1).rotate(angle) * velocity
+        self.size = random.randint(25, 50)
+        self.settings = settings
+        self.game = None
+        self.image = pygame.Surface(
+        (self.size, self.size),
+        pygame.SRCALPHA,
+        )
+        self.half_size = self.size/2
+        pygame.draw.circle(
+            self.image,
+            self.settings.colors["gray"],
+            center = (self.half_size + 1, self.half_size + 1),
+            radius = self.half_size,
+        )
+        self.rect = self.image.get_rect(center=position)
 
+    def update(self):
+        self.rect.center += self.velocity
 class Projectile(pygame.sprite.Sprite):
     """Class to handle projectile movement and drawing."""
 
@@ -148,7 +171,7 @@ class Projectile(pygame.sprite.Sprite):
 
         self.game = None  # will be set in Game.add()
         self.settings = settings
-
+        
         # The (0,-1) part makes the vector point up, and the rotate method
         # rotates the vector by the given angle. Finally, we multiply the vector
         # by the velocity (scalar) to get the final velocity vector.
@@ -194,6 +217,8 @@ class Game:
 
         self.all_sprites = pygame.sprite.Group()
 
+    
+
     def add(self, sprite):
         """Adds a sprite to the game. Really important! This group is used to
         update and draw all of the sprites."""
@@ -206,13 +231,25 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-
+    def make_asteroid(self):
+        """Creates and fires a projectile."""
+        
+        new_asteroid = Asteroid(
+            self.settings,
+            position=(random.randint(0, 400), random.randint(0,400)),
+            angle=random.randint(0, 360),
+            velocity=random.randint(1, 10),            
+        )
+        self.add(new_asteroid)
     def update(self):
-
+        if random.randint(1, 50) == 5:
+            game.make_asteroid()
         # We only need to call the update method of the group, and it will call
         # the update method of all sprites But, we have to make sure to add all
         # of the sprites to the group, so they are updated.
         self.all_sprites.update()
+        
+
 
     def draw(self):
         self.screen.fill(self.settings.colors["black"])
@@ -235,7 +272,6 @@ class Game:
             self.clock.tick(self.settings.fps)
 
         pygame.quit()
-
 
 if __name__ == "__main__":
 
