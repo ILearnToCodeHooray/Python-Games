@@ -81,8 +81,6 @@ class Spaceship(pygame.sprite.Sprite):
         # Important! The game will update all of the sprites in the group, so we
         # need to add the projectile to the group to make sure it is updated.
         self.game.add(new_projectile)
-        self.add(projectile_group)
-
 
     # The Sprite class defines an update method that is called every frame. We
     # can override this method to add our own functionality. In this case, we
@@ -199,13 +197,11 @@ class Projectile(pygame.sprite.Sprite):
         # rotates the vector by the given angle. Finally, we multiply the vector
         # by the velocity (scalar) to get the final velocity vector.
         self.velocity = pygame.Vector2(0, -1).rotate(angle) * velocity
-
         # Dont forget to create the image and rect attributes for the sprite
         self.image = pygame.Surface(
             (self.settings.projectile_size, self.settings.projectile_size),
             pygame.SRCALPHA,
         )
-        self.rect = self.image.get_rect(center=position)
         half_size = self.settings.projectile_size // 2
 
         pygame.draw.circle(
@@ -220,19 +216,22 @@ class Projectile(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.center += self.velocity
-projectile_group = pygame.sprite.Group
-asteroid_group = pygame.sprite.Group
+        
+
+
+
 class Game:
     """Class to manage the game loop and objects."""
 
     def __init__(self, settings):
         pygame.init()
         pygame.key.set_repeat(1250, 1250)
+        self.ast_x = 0
+        self.ast_y = 0
         self.side = random.randint(1,4)
         self.settings = settings
         self.screen = pygame.display.set_mode((self.settings.width, self.settings.height))
         pygame.display.set_caption("Really Boring Asteroids")
-
         self.clock = pygame.time.Clock()
         self.running = True
 
@@ -247,7 +246,6 @@ class Game:
         sprite.game = self
 
         self.all_sprites.add(sprite)
-        asteroid_group.add(sprite)
         
     def handle_events(self):
         for event in pygame.event.get():
@@ -256,35 +254,32 @@ class Game:
     def make_asteroid(self):
         """Creates and fires a projectile."""
         if self.side == (1):
-            ast_x = 0
-            ast_y = random.randint(0,400)
+            self.ast_x = 0
+            self.ast_y = random.randint(0,400)
             self.side = random.randint(1,4)
         elif self.side == (2):
-            ast_x = 400
-            ast_y = random.randint(0,400)
+            self.ast_x = 400
+            self.ast_y = random.randint(0,400)
             self.side = random.randint(1,4)
         elif self.side == (3):
-            ast_x = random.randint(0,400)
-            ast_y = 0
+            self.ast_x = random.randint(0,400)
+            self.ast_y = 0
         elif self.side == (4):
-            ast_x = random.randint(0,400)
-            ast_y = 400
+            self.ast_x = random.randint(0,400)
+            self.ast_y = 400
         new_asteroid = Asteroid(
             self.settings,
-            position=(ast_x, ast_y),
+            position=(self.ast_x, self.ast_y),
             angle=random.randint(0, 360),
             velocity=random.randint(1, 5),            
         )
-        self.add(new_asteroid)
-        
+        self.add(new_asteroid)        
     def update(self):
         if random.randint(1, 50) == 5:
             game.make_asteroid()
 
-        collider = pygame.sprite.spritecollide(asteroid_group, projectile_group, dokill=True)
-        if collider:
-            asteroid_group.kill()
-            projectile_group.kill()
+
+
         # We only need to call the update method of the group, and it will call
         # the update method of all sprites But, we have to make sure to add all
         # of the sprites to the group, so they are updated.
