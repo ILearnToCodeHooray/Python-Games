@@ -1,4 +1,4 @@
-# Python Games
+  # Python Games
 
 If you have completed the League's [Python Apprentice](
 https://python-apprentice.jointheleague.org/) class, you are ready to continue

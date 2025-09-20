@@ -234,18 +234,28 @@ class Game:
         pygame.display.set_caption("Really Boring Asteroids")
         self.clock = pygame.time.Clock()
         self.running = True
-
+        
+        # in Game.__init__
         self.all_sprites = pygame.sprite.Group()
+        self.projectiles = pygame.sprite.Group()
+        self.asteroids = pygame.sprite.Group()
+        self.ships = pygame.sprite.Group()
+
 
     
 
+# in Game.add
     def add(self, sprite):
-        """Adds a sprite to the game. Really important! This group is used to
-        update and draw all of the sprites."""
-
         sprite.game = self
-
         self.all_sprites.add(sprite)
+
+        if isinstance(sprite, Projectile):
+            self.projectiles.add(sprite)
+        elif isinstance(sprite, Asteroid):
+            self.asteroids.add(sprite)
+        elif isinstance(sprite, Spaceship):
+            self.ships.add(sprite)
+
         
     def handle_events(self):
         for event in pygame.event.get():
@@ -274,16 +284,19 @@ class Game:
             velocity=random.randint(1, 5),            
         )
         self.add(new_asteroid)        
+    # in Game.update
     def update(self):
         if random.randint(1, 50) == 5:
-            game.make_asteroid()
+            self.make_asteroid()  # (see small fix below)
 
-
-
-        # We only need to call the update method of the group, and it will call
-        # the update method of all sprites But, we have to make sure to add all
-        # of the sprites to the group, so they are updated.
         self.all_sprites.update()
+
+        # Collide lasers with asteroids; True, True means kill both on hit
+        pygame.sprite.groupcollide(
+            self.projectiles, self.asteroids,
+            True, True,
+            collided=pygame.sprite.collide_mask
+        )
 
 
 
