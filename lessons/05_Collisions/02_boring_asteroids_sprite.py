@@ -2,22 +2,23 @@ import pygame
 import math
 import random
 from pathlib import Path
-
+pygame.init() 
 assets = Path(__file__).parent / "images"
 
 class Settings:
     """Class to store game configuration.""" 
 
     width = 600
-    height = 600
+    height = 450
     fps = 60
     triangle_size = 20
     projectile_speed = 5 
     projectile_size = 11
     shoot_delay = 250  # 250 milliseconds between shots, or 4 shots per second
     colors = {"white": (255, 255, 255), "black": (0, 0, 0), "red": (255, 0, 0), "gray": (128, 128, 128)}
-
-
+    font = pygame.font.SysFont(None, 36)
+    score = 0
+    energy = 20
 # Notice that this Spaceship class is a bit different: it is a subclass of
 # Sprite. Rather than a plain class, like in the previous examples, this class
 # inherits from the Sprite class. The main additional function of a Sprite is
@@ -281,47 +282,59 @@ class Game:
             self.settings,
             position=(self.ast_x, self.ast_y),
             angle=random.randint(0, 360),
-            velocity=random.randint(1, 5),            
+            velocity=random.randint(1, 3),            
         )
         self.add(new_asteroid)        
     # in Game.update
     def update(self):
-        if random.randint(1, 50) == 5:
+        if random.randint(1, 100) == 5:
             self.make_asteroid()  # (see small fix below)
 
         self.all_sprites.update()
-
         # Collide lasers with asteroids; True, True means kill both on hit
-        pygame.sprite.groupcollide(
+        laser_collider = pygame.sprite.groupcollide(
             self.projectiles, self.asteroids,
             True, True,
             collided=pygame.sprite.collide_mask
         )
-
-
-
+        player_collider = pygame.sprite.groupcollide(
+            self.ships, self.asteroids,
+            False, True,
+            collided=pygame.sprite.collide_mask
+        )
+        if player_collider:
+            Settings.energy -= 1 
+        if laser_collider:
+            Settings.score += 1
     def draw(self):
         self.screen.fill(self.settings.colors["black"])
 
         # The sprite group has a draw method that will draw all of the sprites in
         # the group.
         self.all_sprites.draw(self.screen)
-
+        energy_text = Settings.font.render(f"Energy: {Settings.energy}", True, Settings.colors['white'])
+        score_text = Settings.font.render(f"Score: {Settings.score}", True, Settings.colors['white'])
+        self.screen.blit(energy_text, (470, 0))
+        self.screen.blit(score_text, (0, 0))
+        pygame.display.update()
         pygame.display.flip()
 
     def run(self):
         """Main Loop for the game."""
         
        
-        
-        while self.running:
-            self.handle_events()
-            self.update()
-            self.draw()
-            self.clock.tick(self.settings.fps)
-
-        pygame.quit()
-
+        while True:
+            while self.running:
+                self.handle_events()
+                self.update()
+                self.draw()
+                
+                self.clock.tick(self.settings.fps)
+                if Settings.energy == 0:
+                    self.running = False
+            self.screen.fill(self.settings.colors['black'])
+            score_text = Settings.font.render(f"Score: {Settings.score}", True, Settings.colors['white'])
+            self.screen.blit(score_text, (Settings.height/2, Settings.width/2))
 if __name__ == "__main__":
 
     settings = Settings()
