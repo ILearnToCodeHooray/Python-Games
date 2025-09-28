@@ -26,7 +26,7 @@ def make_tiled_bg(screen, bg_file):
     bg_tile = pygame.transform.scale(bg_tile, (bg_tile.get_width(), screen.get_height()))
 
     # Get the dimensions of the background after scaling
-    background_width = bg_tile.get_width()
+    background_width = 100
 
     # Make an image the is the same size as the screen
     image = pygame.Surface((screen.get_width(), screen.get_height()))
@@ -38,7 +38,6 @@ def make_tiled_bg(screen, bg_file):
     return image
 
 background = make_tiled_bg(screen, assets/'background_tile.gif')
-
 # Main loop
 running = True
 while running:

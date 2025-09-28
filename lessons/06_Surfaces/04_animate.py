@@ -16,7 +16,8 @@ def scale_sprites(sprites, scale):
         list: List of scaled pygame.Surface objects.
     """
     return [pygame.transform.scale(sprite, (sprite.get_width() * scale, sprite.get_height() * scale)) for sprite in sprites]
-
+frog = pygame.sprite.Group()
+alligator = pygame.sprite.Group()
 def main():
     # Initialize Pygame
     pygame.init()
