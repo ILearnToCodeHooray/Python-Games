@@ -335,6 +335,8 @@ class Game:
             self.screen.fill(self.settings.colors['black'])
             score_text = Settings.font.render(f"Score: {Settings.score}", True, Settings.colors['white'])
             self.screen.blit(score_text, (Settings.height/2, Settings.width/2))
+
+            pygame.display.flip()
 if __name__ == "__main__":
 
     settings = Settings()
