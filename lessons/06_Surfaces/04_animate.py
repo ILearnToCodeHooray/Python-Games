@@ -21,7 +21,6 @@ alligator = pygame.sprite.Group()
 def main():
     # Initialize Pygame
     pygame.init()
-
     # Set up the display
     screen = pygame.display.set_mode((640, 480))
     pygame.display.set_caption("Sprite Animation Test")
@@ -48,10 +47,22 @@ def main():
 
     # Main game loop
     running = True
-    
     sprite_rect = frog_sprites[0].get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
-    
+    frog_direction_vector = pygame.math.Vector2(0, 100)
+    frog_position = pygame.math.Vector2(0, 100)
+    key_limit = 0
     pygame.math.Vector2(1, 0)
+    def draw_frog(frog, index):
+
+        index = index % (len(frog))
+
+        width = frog[0].get_width()
+        height = frog[0].get_height()
+        composed_image = pygame.Surface((width, height), pygame.SRCALPHA)
+
+        composed_image.blit(frog[index], (0,0))
+
+        return composed_image
     def draw_alligator(alligator, index):
         """Creates a composed image of the alligator sprites.
 
@@ -75,9 +86,23 @@ def main():
 
         return composed_image
     
-    while running:
-        screen.fill((0, 0, 139))  # Clear screen with deep blue
+    def move():
+        init_position = frog_position
 
+        final_position = frog_position + frog_direction_vector
+
+        length = frog_direction_vector.lenghth()
+        N = int(length // 3)
+        step = (final_position - frog_position) / N
+
+        for i in range(N):
+            frog_position += step
+            pygame.draw.line(screen, (255, 0, 0), init_position, final_position, 2)
+            pygame.display.flip
+    while running:
+        key_limit += 1
+        screen.fill((0, 0, 139))  # Clear screen with deep blue
+        keys = pygame.key.get_pressed()
         # Update animation every few frames
         frame_count += 1
         
@@ -86,16 +111,25 @@ def main():
             allig_index = (allig_index + 1) % len(allig_sprites)
         
         # Get the current sprite and display it in the middle of the screen
-
-        
         screen.blit(frog_sprites[frog_index], sprite_rect)
-
+        composed_frog = draw_frog(frog_sprites, frog_index)
+        screen.blit(composed_frog, sprite_rect.move(frog_position))
         composed_alligator = draw_alligator(allig_sprites, allig_index)
         screen.blit(composed_alligator,  sprite_rect.move(0, 100))
-
         screen.blit(log,  sprite_rect.move(0, -100))
 
+        if key_limit%3 == 0:
+            if keys[pygame.K_LEFT]:
+                frog_direction_vector = frog_direction_vector.rotate(-5)
+            elif keys[pygame.K_RIGHT]:
+                frog_direction_vector = frog_direction_vector.rotate(5)
 
+        if keys[pygame.K_UP]:
+            frog_direction_vector.scale_to_length(frog_direction_vector.length() + 5)
+        elif keys[pygame.K_DOWN]:
+            frog_direction_vector.scale_to_length(frog_direction_vector.length() - 5)
+        elif keys[pygame.K_SPACE]:
+            move()
         # Update the display
         pygame.display.flip()
 
