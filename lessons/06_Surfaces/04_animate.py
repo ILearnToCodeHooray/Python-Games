@@ -52,6 +52,11 @@ def main():
     frog_position = pygame.math.Vector2(0, 100)
     key_limit = 0
     pygame.math.Vector2(1, 0)
+
+    def draw_line(show_line = True):
+        end_position = frog_position + frog_direction_vector
+        if show_line:
+            pygame.draw.line(screen, (255, 0, 0), frog_position, end_position, 2)
     def draw_frog(frog, index):
 
         index = index % (len(frog))
@@ -60,7 +65,7 @@ def main():
         height = frog[0].get_height()
         composed_image = pygame.Surface((width, height), pygame.SRCALPHA)
 
-        composed_image.blit(frog[index], (0,0))
+        composed_image.blit(frog[index], (0,100))
 
         return composed_image
     def draw_alligator(alligator, index):
@@ -86,19 +91,21 @@ def main():
 
         return composed_image
     
-    def move():
-        init_position = frog_position
+    def move(position):
+        init_position = position
 
-        final_position = frog_position + frog_direction_vector
+        final_position = position + frog_direction_vector
 
-        length = frog_direction_vector.lenghth()
+        length = frog_direction_vector.length()
         N = int(length // 3)
-        step = (final_position - frog_position) / N
+        step = (final_position - position) / N
 
         for i in range(N):
-            frog_position += step
+            position += step
+            screen.fill((0, 0, 139))
+            draw_line(show_line=False)
             pygame.draw.line(screen, (255, 0, 0), init_position, final_position, 2)
-            pygame.display.flip
+            pygame.display.flip()
     while running:
         key_limit += 1
         screen.fill((0, 0, 139))  # Clear screen with deep blue
@@ -129,7 +136,7 @@ def main():
         elif keys[pygame.K_DOWN]:
             frog_direction_vector.scale_to_length(frog_direction_vector.length() - 5)
         elif keys[pygame.K_SPACE]:
-            move()
+            move(frog_position)
         # Update the display
         pygame.display.flip()
 
