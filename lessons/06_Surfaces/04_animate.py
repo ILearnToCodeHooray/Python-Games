@@ -13,7 +13,7 @@ class Player(pygame.sprite.Sprite):
     def draw_line(self, show_line = True):
         end_position = self.position + self.direction_vector
         if show_line:
-            pygame.draw.line(self.screen, (255, 0, 0), self.position, end_position, 2)
+            pygame.draw.line(self.screen, (255, 0, 0), self.init_position, end_position, 2)
     def move(self, position):
         self.steps_left = 10
         self.init_position = position
@@ -30,8 +30,7 @@ class Player(pygame.sprite.Sprite):
         width = frog[0].get_width()
         height = frog[0].get_height()
         self.composed_image = pygame.Surface((width, height), pygame.SRCALPHA)
-
-        self.composed_image.blit(frog[index], (self.position))
+        self.composed_image.blit(frog[index], (0, 0))
         return self.composed_image
 
     def update(self):
@@ -125,7 +124,6 @@ def main():
             allig_index = (allig_index + 1) % len(allig_sprites)
         
         # Get the current sprite and display it in the middle of the screen
-        screen.blit(frog_sprites[frog_index], sprite_rect)
         composed_frog = player.draw_frog(frog_sprites, frog_index)
         screen.blit(composed_frog, sprite_rect.move(player.position))
         composed_alligator = draw_alligator(allig_sprites, allig_index)
@@ -148,7 +146,6 @@ def main():
         # Update the display
         player.update()
         pygame.display.flip()
-
         # Handle events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
