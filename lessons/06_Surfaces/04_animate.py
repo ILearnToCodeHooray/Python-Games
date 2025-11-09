@@ -10,14 +10,10 @@ class Player(pygame.sprite.Sprite):
         self.position = pygame.math.Vector2(x, y)
         self.direction_vector = pygame.math.Vector2(100, 0)
         self.screen = pygame.display.set_mode((640, 480))
-    def draw_line(self, show_line = True):
-        end_position = self.position + self.direction_vector
-        if show_line:
-            pygame.draw.line(self.screen, (255, 0, 0), self.init_position, end_position, 2)
+        self.sprite_rect = pygame.math.Vector2(self.screen.get_width() // 2, self.screen.get_height() // 2)
     def move(self, position):
         self.steps_left = 10
         self.init_position = position
-
         self.final_position = position + self.direction_vector
 
         length = self.direction_vector.length()
@@ -26,18 +22,17 @@ class Player(pygame.sprite.Sprite):
     def draw_frog(self, frog, index):
 
         index = index % (len(frog))
-
         width = frog[0].get_width()
         height = frog[0].get_height()
         self.composed_image = pygame.Surface((width, height), pygame.SRCALPHA)
         self.composed_image.blit(frog[index], (0, 0))
         return self.composed_image
-
+        
     def update(self):
         if self.steps_left > 0:
             self.position += self.step
-
-            pygame.draw.line(self.screen, (255, 0, 0), self.init_position, self.final_position, 2)
+            end_position = self.position + self.direction_vector
+            pygame.draw.line((self.screen), (255, 0, 0), self.init_position + self.sprite_rect, end_position + self.sprite_rect, 2)
 
             self.steps_left -= 1
             
