@@ -1,6 +1,7 @@
 import pygame
 from jtlgames.spritesheet import SpriteSheet
 from pathlib import Path
+from pygame import Vector2
 
 images = Path(__file__).parent / 'images'
 
@@ -11,14 +12,16 @@ class Player(pygame.sprite.Sprite):
         self.direction_vector = pygame.math.Vector2(100, 0)
         self.screen = pygame.display.set_mode((640, 480))
         self.sprite_rect = pygame.math.Vector2(self.screen.get_width() // 2, self.screen.get_height() // 2)
+        self.init_position = (0, 0)
     def move(self, position):
-        self.steps_left = 10
-        self.init_position = position
-        self.final_position = position + self.direction_vector
+        if self.steps_left <= 0:
+            self.steps_left = self.direction_vector.length() / 3
+            self.init_position = position
+            self.final_position = position + self.direction_vector
 
-        length = self.direction_vector.length()
-        N = int(length // 3)
-        self.step = (self.final_position - position) / N
+            length = self.direction_vector.length()
+            N = int(length // 3)
+            self.step = (self.final_position - position) / N
     def draw_frog(self, frog, index):
 
         index = index % (len(frog))
@@ -31,11 +34,13 @@ class Player(pygame.sprite.Sprite):
     def update(self):
         if self.steps_left > 0:
             self.position += self.step
-            end_position = self.position + self.direction_vector
-            pygame.draw.line((self.screen), (255, 0, 0), self.init_position + self.sprite_rect, end_position + self.sprite_rect, 2)
-
-            self.steps_left -= 1
             
+            self.steps_left -= 1
+        
+    def draw_line(self):
+        end_position = self.position + self.direction_vector
+        pygame.draw.line((self.screen), (255, 0, 0), self.init_position + self.sprite_rect, end_position + self.sprite_rect, 2)
+
 def scale_sprites(sprites, scale):
     """Scale a list of sprites by a given factor.
 
@@ -56,7 +61,7 @@ def main():
     player = Player(0, 0)
     screen = pygame.display.set_mode((640, 480))
     pygame.display.set_caption("Sprite Animation Test")
-
+    timer = 0
     # Load the sprite sheet
     filename = images / 'spritesheet.png'  # Replace with your actual file path
     cellsize = (16, 16)  # Replace with the size of your sprites
@@ -76,6 +81,7 @@ def main():
     allig_index = 0
     frames_per_image = 6
     frame_count = 0
+    frog_frame_count = 0
 
     # Main game loop
     running = True
@@ -113,18 +119,19 @@ def main():
         keys = pygame.key.get_pressed()
         # Update animation every few frames
         frame_count += 1
-        
-        if frame_count % frames_per_image == 0: 
+        if player.steps_left <= 0:
+            frog_frame_count += 1
+        if frog_frame_count % frames_per_image == 0:
             frog_index = (frog_index + 1) % len(frog_sprites)
+        if frame_count % frames_per_image == 0: 
             allig_index = (allig_index + 1) % len(allig_sprites)
         
         # Get the current sprite and display it in the middle of the screen
         composed_frog = player.draw_frog(frog_sprites, frog_index)
         screen.blit(composed_frog, sprite_rect.move(player.position))
         composed_alligator = draw_alligator(allig_sprites, allig_index)
-        screen.blit(composed_alligator,  sprite_rect.move(0, 100))
+        screen.blit(composed_alligator,  sprite_rect.move(move_towards_ip(player.position, 1)))
         screen.blit(log,  sprite_rect.move(0, -100))
-
         if key_limit%3 == 0:
             if keys[pygame.K_LEFT]:
                 player.direction_vector = player.direction_vector.rotate(-5)
@@ -139,7 +146,10 @@ def main():
             player.move(player.position)
             
         # Update the display
+
+
         player.update()
+        player.draw_line()
         pygame.display.flip()
         # Handle events
         for event in pygame.event.get():
