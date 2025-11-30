@@ -3,6 +3,7 @@ from jtlgames.spritesheet import SpriteSheet
 from pathlib import Path
 from pygame import Vector2
 
+
 images = Path(__file__).parent / 'images'
 
 class Player(pygame.sprite.Sprite):
@@ -66,7 +67,7 @@ def main():
     filename = images / 'spritesheet.png'  # Replace with your actual file path
     cellsize = (16, 16)  # Replace with the size of your sprites
     spritesheet = SpriteSheet(filename, cellsize)
-
+    allig_position = pygame.math.Vector2(100, 100)
 
     # Load a strip sprites
     frog_sprites = scale_sprites(spritesheet.load_strip(0, 4, colorkey=-1) , 4)
@@ -130,7 +131,8 @@ def main():
         composed_frog = player.draw_frog(frog_sprites, frog_index)
         screen.blit(composed_frog, sprite_rect.move(player.position))
         composed_alligator = draw_alligator(allig_sprites, allig_index)
-        screen.blit(composed_alligator,  sprite_rect.move(move_towards_ip(player.position, 1)))
+        screen.blit(composed_alligator, sprite_rect.move(allig_position))
+        allig_position.move_towards_ip(player.position, 1)
         screen.blit(log,  sprite_rect.move(0, -100))
         if key_limit%3 == 0:
             if keys[pygame.K_LEFT]:
@@ -158,7 +160,12 @@ def main():
         screen.fill((0, 0, 139))  # Clear screen with deep blue
         # Cap the frame rate
         pygame.time.Clock().tick(60)
-
+        collider = pygame.sprite.groupcollide(
+            frog, alligator,
+            False, False
+            )
+        if collider:
+            pygame.quit()
     # Quit Pygame
     pygame.quit()
 
