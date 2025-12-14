@@ -5,32 +5,6 @@ from pygame import Vector2
 
 
 images = Path(__file__).parent / 'images'
-class Alligator(pygame.sprite.Sprite):
-    def __init__(self, images):
-        super().__init__()
-        self.image = images[0]
-        self.images = images
-    def draw_alligator(self, index):
-        """Creates a composed image of the alligator sprites.
-
-        Args:
-            alligator (list): List of alligator sprites.
-            index (int): Index value to determine the right side sprite.
-
-        Returns:
-            pygame.Surface: Composed image of the alligator.
-        """
-
-        index = index % (4)
-        
-        width = self.images[0].get_width()
-        height = self.images[0].get_height()
-        composed_image = pygame.Surface((width * 3, height), pygame.SRCALPHA)
-
-        composed_image.blit(self.image, (0, 0))
-        composed_image.blit(self.images[1], (width, 1))
-        composed_image.blit(self.images[(index + 3) % len(self.images)], (width * 2, 0))
-        return composed_image
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, images):
         super().__init__()
@@ -69,6 +43,41 @@ class Player(pygame.sprite.Sprite):
         end_position = self.position + self.direction_vector
         pygame.draw.line((self.screen), (255, 0, 0), self.init_position + self.sprite_rect, end_position + self.sprite_rect, 2)
 
+class Alligator(pygame.sprite.Sprite):
+    def __init__(self, images):
+        super().__init__()
+        self.image = images[0]
+        self.images = images
+        self.position = pygame.math.Vector2(100, 100)
+        self.rect = (self.position.x, self.position.y, 50, 50)
+        self.screen = pygame.display.set_mode((640, 480))
+        self.index = 0
+    def draw_alligator(self, index):
+        """Creates a composed image of the alligator sprites.
+
+        Args:
+            alligator (list): List of alligator sprites.
+            index (int): Index value to determine the right side sprite.
+
+        Returns:
+            pygame.Surface: Composed image of the alligator.
+        """
+
+        index = index % (4)
+        
+        width = self.images[0].get_width()
+        height = self.images[0].get_height()
+        composed_image = pygame.Surface((width * 3, height), pygame.SRCALPHA)
+
+        composed_image.blit(self.image, (0, 0))
+        composed_image.blit(self.images[1], (width, 1))
+        composed_image.blit(self.images[(index + 3) % len(self.images)], (width * 2, 0))
+        return composed_image
+    def allig_update(self):
+        self.screen.blit(composed_alligator, sprite_rect.move(self.position))
+        self.position.move_towards_ip(Player.position, 1)
+        composed_alligator = self.draw_alligator(self.index)
+
 def scale_sprites(sprites, scale):
     """Scale a list of sprites by a given factor.
 
@@ -80,10 +89,7 @@ def scale_sprites(sprites, scale):
         list: List of scaled pygame.Surface objects.
     """
     return [pygame.transform.scale(sprite, (sprite.get_width() * scale, sprite.get_height() * scale)) for sprite in sprites]
-frog = pygame.sprite.Group()
-alligator = pygame.sprite.Group()
-frog.add(frog)
-alligator.add(alligator)
+
 def main():
     # Initialize Pygame
     pygame.init()
@@ -101,8 +107,13 @@ def main():
     player = Player(0, 0, frog_sprites)
     allig = Alligator(allig_sprites)
     # Load the sprite sheet
+    frog_group = pygame.sprite.Group()
+    alligator_group = pygame.sprite.Group()
 
-    allig_position = pygame.math.Vector2(100, 100)
+    frog_group.add(player)
+    alligator_group.add(allig)
+
+
 
 
     # Compose an image
@@ -111,7 +122,6 @@ def main():
 
     # Variables for animation
     frog_index = 0
-    allig_index = 0
     frames_per_image = 6
     frame_count = 0
     frog_frame_count = 0
@@ -132,14 +142,12 @@ def main():
         if frog_frame_count % frames_per_image == 0:
             frog_index = (frog_index + 1) % len(frog_sprites)
         if frame_count % frames_per_image == 0: 
-            allig_index = (allig_index + 1) % len(allig_sprites)
+            allig.index = (allig.index + 1) % len(allig_sprites)
         
         # Get the current sprite and display it in the middle of the screen
         composed_frog = player.draw_frog(frog_index)
         screen.blit(composed_frog, sprite_rect.move(player.position))
-        composed_alligator = allig.draw_alligator(allig_index)
-        screen.blit(composed_alligator, sprite_rect.move(allig_position))
-        allig_position.move_towards_ip(player.position, 1)
+        
         #screen.blit(log,  sprite_rect.move(0, -100))
         if key_limit%3 == 0:
             if keys[pygame.K_LEFT]:
@@ -156,7 +164,7 @@ def main():
             
         # Update the display
 
-
+        print(sprite_rect)
         player.update()
         player.draw_line()
         pygame.display.flip()
@@ -168,9 +176,10 @@ def main():
         # Cap the frame rate
         pygame.time.Clock().tick(60)
         collider = pygame.sprite.groupcollide(
-            frog, alligator,
-            False, False
+            frog_group, alligator_group,
+            False, True
             )
+
         if collider:
             pygame.quit()
     # Quit Pygame
