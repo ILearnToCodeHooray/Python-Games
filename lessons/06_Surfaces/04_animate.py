@@ -6,17 +6,21 @@ from pygame import Vector2
 
 images = Path(__file__).parent / 'images'
 class Player(pygame.sprite.Sprite):
-    def __init__(self, x, y, images):
+    def __init__(self, x, y, frog_images):
         super().__init__()
-        self.image = images[0]
-        self.images = images
+        self.image = frog_images[0]
+        self.images = frog_images
         self.steps_left = 0
         self.position = pygame.math.Vector2(x, y)
         self.direction_vector = pygame.math.Vector2(100, 0)
         self.screen = pygame.display.set_mode((640, 480))
-        self.sprite_rect = pygame.math.Vector2(self.screen.get_width() // 2, self.screen.get_height() // 2)
         self.init_position = (0, 0)
+        self.filename = images / 'spritesheet.png'
+        self.cellsize = (16, 16)
+        self.spritesheet = SpriteSheet(self.filename, self.cellsize)
         self.rect = self.image.get_rect(center=self.position)
+        self.frog_sprites = scale_sprites(self.spritesheet.load_strip(0, 4, colorkey=-1) , 4)
+        self.sprite_rect = self.frog_sprites[0].get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
     def move(self, position):
         if self.steps_left <= 0:
             self.steps_left = self.direction_vector.length() / 3
@@ -96,7 +100,6 @@ def main():
     screen = pygame.display.set_mode((640, 480))
     pygame.display.set_caption("Sprite Animation Test")
     filename = images / 'spritesheet.png'  # Replace with your actual file path
-
     cellsize = (16, 16)  # Replace with the size of your sprites
     spritesheet = SpriteSheet(filename, cellsize)
 
@@ -164,7 +167,7 @@ def main():
             
         # Update the display
 
-        print(sprite_rect)
+
         player.update()
         player.draw_line()
         pygame.display.flip()
