@@ -11,17 +11,14 @@ class Player(pygame.sprite.Sprite):
         self.image = frog_images[0]
         self.images = frog_images
         self.steps_left = 0
-        self.position = pygame.math.Vector2(x, y)
         self.direction_vector = pygame.math.Vector2(100, 0)
         self.screen = pygame.display.set_mode((640, 480))
         self.init_position = (0, 0)
         self.filename = images / 'spritesheet.png'
         self.cellsize = (16, 16)
         self.spritesheet = SpriteSheet(self.filename, self.cellsize)
-        self.rect = self.image.get_rect(center=self.position)
+        self.rect = self.image.get_rect(center=(x,y))
         self.frog_sprites = scale_sprites(self.spritesheet.load_strip(0, 4, colorkey=-1) , 4)
-        self.sprite_rect = self.frog_sprites[0].get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
-        self.frog_pos = pygame.math.Vector2(self.screen.get_width() // 2, self.screen.get_height() // 2)
     def move(self, position):
         if self.steps_left <= 0:
             self.steps_left = self.direction_vector.length() / 3
@@ -40,22 +37,24 @@ class Player(pygame.sprite.Sprite):
         
     def update(self):
         if self.steps_left > 0:
-            self.position += self.step
-            
+            self.rect.x += self.step[0]
+            self.rect.y += self.step[0]
             self.steps_left -= 1
         
     def draw_line(self):
-        end_position = self.position + self.direction_vector
-        pygame.draw.line((self.screen), (255, 0, 0), self.init_position + self.frog_pos, end_position + self.frog_pos, 2)
+        end_position = pygame.math.Vector2(self.rect[0:2]) + self.direction_vector
+        pygame.draw.line((self.screen), (255, 0, 0), pygame.math.Vector2(self.rect[0:2]), end_position, 2)
 
 class Alligator(pygame.sprite.Sprite):
-    def __init__(self, images):
+    def __init__(self, x, y, player_pos, images):
         super().__init__()
         self.other_images = Path(__file__).parent / 'images'
         self.image = images[0]
         self.images = images
-        self.position = pygame.math.Vector2(100, 100)
-        self.rect = (self.position.x, self.position.y, 50, 50)
+        self.position = pygame.math.Vector2(self.rect[0:2].ip_move_towards(player_pos, 1))
+        self.rect = self.image.get_rect(center=self.position)
+        self.rect.x = player_pos[0]
+        self.rect.y = player_pos[1]
         self.screen = pygame.display.set_mode((640, 480))
         self.index = 0
         self.filename = self.other_images / 'spritesheet.png'
@@ -117,7 +116,7 @@ def main():
     allig_sprites = scale_sprites(spritesheet.load_strip( (0,4), 9, colorkey=-1), 4)
     # Set up the display
     player = Player(0, 0, frog_sprites)
-    allig = Alligator(allig_sprites)
+    allig = Alligator(player.rect.center, allig_sprites)
     # Load the sprite sheet
     frog_group = pygame.sprite.Group()
     alligator_group = pygame.sprite.Group()
@@ -158,10 +157,8 @@ def main():
         
         # Get the current sprite and display it in the middle of the screen
         
-        composed_frog = player.draw_frog(frog_index)
-        screen.blit(composed_frog, sprite_rect.move(player.position))
-        composed_allig = allig.draw_alligator(allig.index)
-        screen.blit(composed_allig, sprite_rect.move(allig.position))
+        #composed_allig = allig.draw_alligator(allig.index)
+        #screen.blit(composed_allig, sprite_rect.move(allig.position))
         #screen.blit(log,  sprite_rect.move(0, -100))
         if key_limit%3 == 0:
             if keys[pygame.K_LEFT]:
@@ -174,14 +171,17 @@ def main():
         elif keys[pygame.K_DOWN]:
             player.direction_vector.scale_to_length(player.direction_vector.length() - 5)
         elif keys[pygame.K_SPACE]:
-            player.move(player.position)
+            player.move(player.rect.center)
             
         # Update the display
 
 
         player.update()
+        frog_group.draw(screen)
         player.draw_line()
-        allig.allig_update(player.position)
+        
+        pygame.draw.rect(screen, (255,0,0), allig.rect)
+        allig.allig_update(player.rect.center)
         pygame.display.flip()
         # Handle events
         for event in pygame.event.get():
@@ -189,16 +189,16 @@ def main():
                 running = False
         screen.fill((0, 0, 139))  # Clear screen with deep blue
         # Cap the frame rate
-        for s in frog_group:
+        for s in alligator_group:
             print(f"x:  {s.rect.x}")
             print(f"y:  {s.rect.y}")
         pygame.time.Clock().tick(60)
-        collider = pygame.sprite.groupcollide(
+        collider = pygame.sprite.groupcollide( 
             frog_group, alligator_group,
             True, True
             )
         if not len(collider) == 0:
-            pygame.quit()
+            break
     # Quit Pygame
     pygame.quit()
 
