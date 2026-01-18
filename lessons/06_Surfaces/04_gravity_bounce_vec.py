@@ -9,7 +9,8 @@ understandable, and makes it easier to add more complex features to the game.
 """
 import pygame
 from dataclasses import dataclass
-
+from jtlgames.spritesheet import SpriteSheet
+from pathlib import Path
 
 class Colors:
     """Constants for Colors"""
@@ -76,12 +77,17 @@ class Player:
     """Player class, just a bouncing rectangle"""
 
     def __init__(self, game: Game):
+        self.images = Path(__file__).parent / 'images'
+        self.filename = self.images / 'spritesheet.png'
+        self.cellsize = (16, 16)
+        self.ss = SpriteSheet(self.filename, self.cellsize)
         self.game = game
         settings = self.game.settings
-
+        self.image = self.ss.image_at(4)
+        self.frog2x = pygame.transform.scale(self.image, (self.image.get_width() * 2, self.image.get_height() * 2))
         self.width = settings.player_width
         self.height = settings.player_height
-    
+        self.rotation = 0
         # Vector for our jump velocity, which is just up
         self.v_jump = pygame.Vector2(0, -settings.player_jump_velocity)
 
@@ -171,8 +177,13 @@ class Player:
         # stop the jump
         
         if self.at_bottom():
+            self.frog2x = pygame.transform.scale(self.image, (self.image.get_width() * 2, self.image.get_height() * 1))
             self.pos.y = self.game.settings.height - self.height
-
+            self.rotation = 0
+        else:
+            self.frog2x = pygame.transform.scale(self.image, (self.image.get_width() * 2, self.image.get_height() * 2))
+            self.frog2x = pygame.transform.rotate(self.frog2x, self.rotation)
+            self.rotation += 5
         if self.at_top():
             self.pos.y = 0
 
@@ -195,7 +206,7 @@ class Player:
 
     def draw(self, screen):
         pygame.draw.rect(screen, Colors.PLAYER_COLOR, (self.pos.x, self.pos.y, self.width, self.height))
-
+        screen.blit(self.frog2x, (self.pos.x, self.pos.y))
 
 settings = GameSettings()
 game = Game(settings)
