@@ -99,7 +99,17 @@ class Background(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = 0
         self.rect.y = 0
+class Game_Over(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        gm_ovr_img = pygame.image.load(assets/'images/pipe-green.png').convert_alpha()
+        self.image = pygame.transform.scale(gm_ovr_img, (200, 200))
+        self.rect = self.image.get_rect()
+        self.rect.x = 0
+        self.rect.y = 0
 
+game_over_screen = Game_Over()
+game_over_group = pygame.sprite.Group(game_over_screen)
 def add_obstacle(obstacles):
     # random.random() returns a random float between 0 and 1, so a value
     # of 0.25 means that there is a 25% chance of adding an obstacle. Since
@@ -134,7 +144,8 @@ def main():
     screen.fill(Settings.colors['white'])
     while running:
         if Settings.game_over == True:
-            running = False
+            Settings.screen.fill(Settings.colors['white'])
+            game_over_group.draw(Settings.screen)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
