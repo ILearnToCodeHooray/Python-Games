@@ -28,6 +28,8 @@ class Settings:
     obstacle_x = 0
     score = 0
     font = pygame.font.SysFont(None, 36)
+    high_score = 0
+    obstacles_passed = 0
 screen = pygame.display.set_mode((Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT))
 pygame.display.set_caption("Flappy Bird")
 
@@ -49,7 +51,7 @@ class Obstacle(pygame.sprite.Sprite):
         self.rect.x -= Settings.obstacle_speed
         Settings.obstacle_x -= Settings.obstacle_speed
         # Remove the obstacle if it goes off screen
-        if self.rect.x < 0:
+        if self.rect.x < -100:
             self.kill()
 
 class Player(pygame.sprite.Sprite):
@@ -103,7 +105,7 @@ class Game_Over(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         gm_ovr_img = pygame.image.load(assets/'images/gameover.png').convert_alpha()
-        self.image = pygame.transform.scale(gm_ovr_img, (400, 150))
+        self.image = pygame.transform.scale(gm_ovr_img, (550, 150))
         self.rect = self.image.get_rect()
         self.rect.x = 0
         self.rect.y = 0
@@ -133,7 +135,6 @@ def main():
     running = True
     obstacles = pygame.sprite.Group()
     obstacle_count = 0
-    high_score = 0
     bg = Background()
     all_sprites = pygame.sprite.Group()
     all_sprites.add(bg)
@@ -150,6 +151,7 @@ def main():
                 if event.key == pygame.K_SPACE:
                     player.velocity = player.jump_strength
                 if event.key == pygame.K_SPACE and Settings.game_over:
+                    Settings.score = 0
                     Settings.game_over = False
                     main()
         player.update()
@@ -160,8 +162,8 @@ def main():
         obstacles.update()
 
         for obstacle in obstacles:
-            if not obstacle.scored and not obstacle.collided and obstacle.rect.right < player.rect.left:
-                Settings.score +=1 
+            if not obstacle.scored and not obstacle.collided and obstacle.rect.right < player.rect.left and not Settings.game_over:
+                Settings.score += 1
                 obstacle.scored = True
         
         collider = pygame.sprite.spritecollide(player, obstacles, dokill=False)
@@ -169,13 +171,13 @@ def main():
             if not obstacle.collided:
                 obstacle.collided = True
                 Settings.game_over = True
-                if Settings.score > high_score:
-                    high_score = Settings.score
+                if Settings.score > Settings.high_score:
+                    Settings.high_score = Settings.score
         if Settings.game_over == True:
             screen.fill(Settings.colors['white'])
             game_over_group.draw(screen)
-            score_text = Settings.font.render(f"Score: {Settings.score}", True, Settings.colors['black'])
-            high_score_text = Settings.font.render(f"High Score: {high_score}", True, Settings.colors['black'])
+            score_text = Settings.font.render(f"Score: {int(Settings.score/2)}", True, Settings.colors['black'])
+            high_score_text = Settings.font.render(f"High Score: {int(Settings.high_score/2)}", True, Settings.colors['black'])
             press_space_text = Settings.font.render("Press space to restart", True, Settings.colors['black'])
             screen.blit(score_text, (200, 220))
             screen.blit(high_score_text, (200, 250))
@@ -185,6 +187,9 @@ def main():
             all_sprites.draw(screen)
             player_group.draw(screen)
             obstacles.draw(screen)
+            score_text = Settings.font.render(f"Score: {int(Settings.score/2)}", True, Settings.colors['black'])
+            screen.blit(score_text, (10, 10))
+            pygame.display.update()
         pygame.display.flip()
         clock.tick(Settings.FPS)
     pygame.quit()
