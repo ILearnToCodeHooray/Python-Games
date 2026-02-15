@@ -6,10 +6,10 @@ pygame.init()
 class Settings:
     """A class to store all settings for the game."""
     SCREEN_WIDTH  = 600
-    SCREEN_HEIGHT = 800
-    BACKGROUND_SCROLL_SPEED = 2
+    SCREEN_HEIGHT = 650
     FPS = 30
     laser_count = 0
+    alien_move_speed = 2
 
 screen = pygame.display.set_mode((Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT))
 pygame.display.set_caption("Space Invaders")
@@ -22,16 +22,16 @@ class Background(pygame.sprite.Sprite):
         orig_image = pygame.transform.scale(orig_image, (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT))
         self.image.blit(orig_image, (0, 0))
         self.rect = self.image.get_rect()
-        self.rect.x = 20
+        self.rect.x = 0
         self.rect.y = -200
 class Alien(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, x, y):
         super().__init__()
         alien_image = pygame.image.load(d/'images/alien.png').convert_alpha()
         self.image = pygame.transform.scale(alien_image, (25, 25))
         self.rect= self.image.get_rect()
-        self.rect.x = 0
-        self.rect.y = 0
+        self.rect.x = x
+        self.rect.y = y
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -39,12 +39,11 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(player_image, (25, 25))
         self.rect = self.image.get_rect()
         self.rect.x = 300
-        self.rect.y = 500
+        self.rect.y = 400
         
 player = Player()
 player_group = pygame.sprite.Group(player)
-alien = Alien()
-alien_group = pygame.sprite.Group(alien)
+
 
 class Laser(pygame.sprite.Sprite):
     def __init__(self):
@@ -76,7 +75,20 @@ def main():
     bg = Background()
     all_sprites = pygame.sprite.Group(bg)
     lasers = pygame.sprite.Group()
+    alien_group = pygame.sprite.Group()
+    x = 20
+    alienlist = []
 
+    for i in range(10):
+        alien = Alien(x, 0)
+        alien_group.add(alien)
+        alienlist.append(alien)
+        x += 40
+    for i in range(10):
+        alien = Alien(x, -40)
+        alien_group.add(alien)
+        alienlist.append(alien)
+        x += 40
     clock = pygame.time.Clock()
     while running:
         keys = pygame.key.get_pressed()
@@ -90,9 +102,20 @@ def main():
             player.rect.x -= 5
         if keys[pygame.K_RIGHT]:
             player.rect.x += 5
+        for alien in alienlist:
+            alien.rect.x += Settings.alien_move_speed
+            if alien.rect.x > 600:
+                Settings.alien_move_speed = -2
+                #alien.rect.y += 40
+            if alien.rect.x < 0:
+                Settings.alien_move_speed = 2
+                #alien.rect.y += 40
+        if pygame.sprite.groupcollide(alien_group, lasers, True, True):
+            Settings.laser_count -= 1
         all_sprites.update()
         all_sprites.draw(screen)
         player_group.draw(screen)
+        alien_group.draw(screen)
         lasers.draw(screen)
         lasers.update()
         pygame.display.flip()
