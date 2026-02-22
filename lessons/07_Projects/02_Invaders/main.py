@@ -10,10 +10,17 @@ class Settings:
     FPS = 30
     laser_count = 0
     alien_move_speed = 2
-
+    score = 0
+    font = pygame.font.SysFont(None, 36)
+    colors = {
+            'white': (255, 255, 255),
+            'black': (0, 0, 0),
+            'blue': (0, 0, 255)
+        }
+    game_over = False
+    
 screen = pygame.display.set_mode((Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT))
 pygame.display.set_caption("Space Invaders")
-
 class Background(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -67,60 +74,102 @@ def shoot_laser(Lasers):
         laser.rect.x = player.rect.x
         Lasers.add(laser)
         Settings.laser_count += 1
+class Game_Over(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        gm_ovr_img = pygame.image.load(d/'images/gameover.png').convert_alpha()
+        self.image = pygame.transform.scale(gm_ovr_img, (550, 150))
+        self.rect = self.image.get_rect()
+        self.rect.x = 0
+        self.rect.y = 0
 
+game_over_screen = Game_Over()
+game_over_group = pygame.sprite.Group(game_over_screen)
 def main():
     """Run the main game loop."""
     running = True
-
+    game_begun = False
     bg = Background()
     all_sprites = pygame.sprite.Group(bg)
     lasers = pygame.sprite.Group()
     alien_group = pygame.sprite.Group()
-    x = 20
     alienlist = []
-
-    for i in range(10):
-        alien = Alien(x, 0)
-        alien_group.add(alien)
-        alienlist.append(alien)
-        x += 40
-    for i in range(10):
-        alien = Alien(x, -40)
-        alien_group.add(alien)
-        alienlist.append(alien)
-        x += 40
-    clock = pygame.time.Clock()
-    while running:
-        keys = pygame.key.get_pressed()
+    while game_begun == False:
+        screen.fill(Settings.colors['white'])
+        main_menu = Settings.font.render("Press space to begin", True, Settings.colors['black'])
+        screen.blit(main_menu, (200, 220))
+        pygame.display.flip
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    shoot_laser(lasers)
-        if keys[pygame.K_LEFT]:
-            player.rect.x -= 5
-        if keys[pygame.K_RIGHT]:
-            player.rect.x += 5
-        for alien in alienlist:
-            alien.rect.x += Settings.alien_move_speed
-            if alien.rect.x > 600:
-                Settings.alien_move_speed = -2
-                #alien.rect.y += 40
-            if alien.rect.x < 0:
-                Settings.alien_move_speed = 2
-                #alien.rect.y += 40
-        if pygame.sprite.groupcollide(alien_group, lasers, True, True):
-            Settings.laser_count -= 1
-        all_sprites.update()
-        all_sprites.draw(screen)
-        player_group.draw(screen)
-        alien_group.draw(screen)
-        lasers.draw(screen)
-        lasers.update()
-        pygame.display.flip()
-        
-        clock.tick(Settings.FPS)
+                    game_begun = True
+    if game_begun == True:
+        x = 20
+        y = 0
+        for i in range(4):
+            for i in range(10):
+                alien = Alien(x, y)
+                alien_group.add(alien)
+                alienlist.append(alien)
+                x += 40
+            x = 20
+            y -= 30
+        for i in range(10):
+            alien = Alien(x, -30)
+            alien_group.add(alien)
+            alienlist.append(alien)
+            x += 40
+        clock = pygame.time.Clock()
+        while running:
+            keys = pygame.key.get_pressed()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        shoot_laser(lasers)
+            if keys[pygame.K_LEFT]:
+                player.rect.x -= 5
+            if keys[pygame.K_RIGHT]:
+                player.rect.x += 5
+            for alien in alienlist:
+                alien.rect.x += Settings.alien_move_speed
+            for alien in alienlist:
+                if alien.rect.x > 600:
+                    Settings.alien_move_speed = -2
+                    for alien in alienlist:
+                        alien.rect.y += 20
+                    break
+                if alien.rect.x < 0:
+                    Settings.alien_move_speed = 2
+                    for alien in alienlist:
+                        alien.rect.y += 20
+                    break
+            if pygame.sprite.groupcollide(alien_group, lasers, True, True):
+                Settings.laser_count -= 1
+                Settings.score += 1
+            if pygame.sprite.groupcollide(alien_group, player_group, False, False):
+                Settings.game_over = True
+            if Settings.game_over == True:
+                screen.fill(Settings.colors['white'])
+                game_over_group.draw(screen)
+                score_text = Settings.font.render(f"Score: {int(Settings.score)}", True, Settings.colors['black'])
+                screen.blit(score_text, (200, 220))
+            else:
+                score_text = Settings.font.render(f"Score: {int(Settings.score)}", True, Settings.colors['white'])
+
+                all_sprites.update()
+                all_sprites.draw(screen)
+                player_group.draw(screen)
+                alien_group.draw(screen)
+                lasers.draw(screen)
+                lasers.update()
+                screen.blit(score_text, (0, 0))
+            pygame.display.flip()
+            
+            clock.tick(Settings.FPS)
     pygame.quit()
 
 
