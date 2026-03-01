@@ -6,7 +6,7 @@ pygame.init()
 class Settings:
     """A class to store all settings for the game."""
     SCREEN_WIDTH  = 600
-    SCREEN_HEIGHT = 650
+    SCREEN_HEIGHT = 750
     FPS = 30
     laser_count = 0
     alien_move_speed = 2
@@ -46,7 +46,7 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(player_image, (25, 25))
         self.rect = self.image.get_rect()
         self.rect.x = 300
-        self.rect.y = 400
+        self.rect.y = Settings.SCREEN_HEIGHT - 250
         
 player = Player()
 player_group = pygame.sprite.Group(player)
@@ -95,10 +95,10 @@ def main():
     alien_group = pygame.sprite.Group()
     alienlist = []
     while game_begun == False:
-        screen.fill(Settings.colors['white'])
         main_menu = Settings.font.render("Press space to begin", True, Settings.colors['black'])
-        screen.blit(main_menu, (200, 220))
-        pygame.display.flip
+        screen.fill(Settings.colors['white'])
+        screen.blit(main_menu, (200, 200))
+        pygame.display.flip()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
