@@ -6,7 +6,7 @@ pygame.init()
 class Settings:
     """A class to store all settings for the game."""
     SCREEN_WIDTH  = 600
-    SCREEN_HEIGHT = 750
+    SCREEN_HEIGHT = 600
     FPS = 30
     laser_count = 0
     alien_move_speed = 2
@@ -15,7 +15,9 @@ class Settings:
     colors = {
             'white': (255, 255, 255),
             'black': (0, 0, 0),
-            'blue': (0, 0, 255)
+            'blue': (0, 0, 255),
+            'green': (0, 255, 0),
+            'gray': (127, 127, 127)
         }
     game_over = False
 
@@ -23,59 +25,52 @@ screen = pygame.display.set_mode((Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT)
 pygame.display.set_caption("Frogger")
 
 class Background(pygame.sprite.Sprite):
-    def __init__(self, colors, tile_width=100, scroll_speed=120):
+    def __init__(self):
         super().__init__()
-        self.tile_width = tile_width
-        self.scroll_speed = scroll_speed  # pixels per second
-        self.image = self.make_repeating_pattern(colors)
-        self.rect = self.image.get_rect(topleft=(0, 0))  # where pattern starts
-        self.pattern_width = self.image.get_width()
+        self.image = pygame.Surface((Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT))
+        orig_image= pygame.image.load(d/'images/frogger_road_bg.png').convert()
+        orig_image = pygame.transform.scale(orig_image, (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT))
+        self.image.blit(orig_image, (0, 0))
+        self.rect = self.image.get_rect()
+        self.rect.x = 0
+        self.rect.y = -50
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        player_image = pygame.image.load(d/'images/frog.png').convert_alpha()
+        self.image = pygame.transform.scale(player_image, (100, 100))
+        self.rect = self.image.get_rect()
+        self.rect.x = 300
+        self.rect.y = 450
 
-    def make_color_tile(self, color):
-        """Return a 100px-wide Surface as tall as the screen, filled with color."""
-        surf = pygame.Surface((self.tile_width, Settings.SCREEN_HEIGHT))
-        surf.fill(color)
-        return surf
-
-    def make_repeating_pattern(self, colors):
-        """Create one long repeating strip of colored tiles."""
-        pattern_w = self.tile_width * len(colors)
-        pattern = pygame.Surface((pattern_w, Settings.SCREEN_HEIGHT)).convert()
-        x = 0
-        for color in colors:
-            pattern.blit(self.make_color_tile(color), (x, 0))
-            x += self.tile_width
-        return pattern
-    
-    def update(self):
-        """Update the position of the background."""
-        
-        self.rect.x -= Settings.BACKGROUND_SCROLL_SPEED
-        
-        if self.rect.right <= Settings.SCREEN_WIDTH:
-            self.rect.x = 0
+player = Player()
+player_group = pygame.sprite.Group(player)
 
 def main():
     """Run the main game loop."""
     running = True
-
-
     bg = Background()
-    all_sprites = pygame.sprite.Group()
-    all_sprites.add(bg)
-
+    all_sprites = pygame.sprite.Group(bg)
     clock = pygame.time.Clock()
-
-    while running:
+    while running: 
+        keys = pygame.key.get_pressed()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-
-
+            if keys[pygame.K_UP] and not player.rect.y == 0:
+                player.rect.y -= 75
+            if keys[pygame.K_DOWN] and not player.rect.y == 450:
+                player.rect.y += 75
+            if keys[pygame.K_LEFT] and not player.rect.x == 0:
+                player.rect.x -= 75
+            if keys[pygame.K_RIGHT] and not player.rect.x == 525:
+                player.rect.x += 75
         all_sprites.update()
         all_sprites.draw(screen)
+        player_group.draw(screen)
         pygame.display.flip()
-        
         clock.tick(Settings.FPS)
-
     pygame.quit()
+
+if __name__ == "__main__":
+    main()
