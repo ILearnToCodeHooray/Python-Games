@@ -24,6 +24,7 @@ class Settings:
     obstacle_height = 100
     obstacle_speed = 5
     game_over = False
+    high_score = 0
 
 screen = pygame.display.set_mode((Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT))
 pygame.display.set_caption("Frogger")
@@ -42,9 +43,9 @@ class car_left(pygame.sprite.Sprite):
         self.alive = True
         self.collided = False
 
-    def update(self):
-        self.rect.x -= Settings.obstacle_speed
-        Settings.obstacle_x -= Settings.obstacle_speed
+    def update(self, level):
+        self.rect.x -= Settings.obstacle_speed * level
+        Settings.obstacle_x -= Settings.obstacle_speed * level
         # Remove the obstacle if it goes off screen
         if self.rect.x < 0:
             self.kill()
@@ -63,22 +64,36 @@ class car_right(pygame.sprite.Sprite):
         self.alive = True
         self.collided = False
 
-    def update(self):
-        self.rect.x += Settings.obstacle_speed
-        Settings.obstacle_x += Settings.obstacle_speed
+    def update(self, level):
+        self.rect.x += Settings.obstacle_speed * level
+        Settings.obstacle_x += Settings.obstacle_speed * level
         # Remove the obstacle if it goes off screen
         if self.rect.x < 0:
             self.kill()
+
 class Background(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.Surface((Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT))
-        orig_image= pygame.image.load(d/'images/frogger_road_bg.png').convert()
+        orig_image = pygame.image.load(d/'images/frogger_road_bg.png').convert()
         orig_image = pygame.transform.scale(orig_image, (Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT))
         self.image.blit(orig_image, (0, 0))
         self.rect = self.image.get_rect()
         self.rect.x = 0
         self.rect.y = -50
+
+class Game_Over(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        gm_ovr_img = pygame.image.load(d/'images/gameover.png').convert_alpha()
+        self.image = pygame.transform.scale(gm_ovr_img, (550, 150))
+        self.rect = self.image.get_rect()
+        self.rect.x = 0
+        self.rect.y = 0
+
+game_over_screen = Game_Over()
+game_over_group = pygame.sprite.Group(game_over_screen)
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -142,11 +157,14 @@ def main():
     row_4 = pygame.sprite.Group()
     row_5 = pygame.sprite.Group()
     car_count = 0
+    score = 0
+    level = 1
+    lives = 3
+    time_start = pygame.time.get_ticks()/1000
     while running:
-        time_since_start = pygame.time.get_ticks()/1000
+        time_since_start = pygame.time.get_ticks()/1000 - time_start
         time = 30 - time_since_start
         time_int = int(time)
-        print(time_int) 
         keys = pygame.key.get_pressed()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -172,26 +190,65 @@ def main():
                 car_count += add_car_right(row_4, "row_4")
             elif which_row == 5:
                 car_count += add_car_left(row_5, "row_5")
+        if pygame.sprite.groupcollide(row_1, player_group, False, False) and player.rect.y == 375:
+            lives -= 1
+            player.rect.y = 450
+        if pygame.sprite.groupcollide(row_2, player_group, False, False) and player.rect.y == 300:
+            lives -= 1
+            player.rect.y = 450
+        if pygame.sprite.groupcollide(row_3, player_group, False, False) and player.rect.y == 225:
+            lives -= 1
+            player.rect.y = 450
+        if pygame.sprite.groupcollide(row_4, player_group, False, False) and player.rect.y == 150:
+            lives -= 1
+            player.rect.y = 450
+        if pygame.sprite.groupcollide(row_5, player_group, False, False) and player.rect.y == 75:
+            lives -= 1   
+            player.rect.y = 450                                         
+        if player.rect.y == 0:
+            score += 1
+            player.rect.y = 450
+            time_start = pygame.time.get_ticks()/1000 + 1
         if time_int <= 0:
-            running = False
-        row_1.update()
-        row_2.update()
-        row_3.update()
-        row_4.update()
-        row_5.update()
-        all_sprites.update()
-        all_sprites.draw(screen)
-        player_group.draw(screen)
-        row_1.draw(screen)
-        row_2.draw(screen)
-        row_3.draw(screen)
-        row_4.draw(screen)
-        row_5.draw(screen)           
-        time_text = Settings.font.render(f"Time left: {int(time)}", True, Settings.colors['black'])
-        screen.blit(time_text, (10, 10))
-        pygame.display.flip()
-        clock.tick(Settings.FPS)
+            Settings.game_over = True
+        if score == 4:
+            level += 1
+            score = 0
+        if lives == 0:
+            Settings.game_over = True
+        if Settings.game_over == True:
+            screen.fill(Settings.colors['white'])
+            game_over_group.draw(screen)
+            score_text = Settings.font.render(f"Score: {int(Settings.score)}", True, Settings.colors['black'])
+            high_score_text = Settings.font.render(f"High Score: {int(Settings.high_score)}", True, Settings.colors['black'])
+            screen.blit(score_text, (200, 220))
+            screen.blit(high_score_text, (200, 250))
+        else:
+            row_1.update(level)
+            row_2.update(level)
+            row_3.update(level)
+            row_4.update(level)
+            row_5.update(level)
+            all_sprites.update()
+            all_sprites.draw(screen)
+            player_group.draw(screen)
+            row_1.draw(screen)
+            row_2.draw(screen)
+            row_3.draw(screen)
+            row_4.draw(screen)
+            row_5.draw(screen)       
+            time_text = Settings.font.render(f"Time left: {int(time)}", True, Settings.colors['black'])
+            screen.blit(time_text, (10, 10))
+            score_text = Settings.font.render(f"Score: {score}", True, Settings.colors['black'])
+            screen.blit(score_text, (175, 10))
+            level_text = Settings.font.render(f"Level {level}", True, Settings.colors['black'])
+            screen.blit(level_text, (300, 10))
+            lives_text = Settings.font.render(f"Lives: {lives}", True, Settings.colors['black'])
+            screen.blit(lives_text, (400, 10))
+            pygame.display.flip()
+            clock.tick(Settings.FPS)
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()

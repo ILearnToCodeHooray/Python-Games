@@ -191,7 +191,6 @@ def main():
             screen.blit(score_text, (10, 10))
             pygame.display.update()
         pygame.display.flip()
-        clock.tick(Settings.FPS)
     pygame.quit()
 
 if __name__ == "__main__":
