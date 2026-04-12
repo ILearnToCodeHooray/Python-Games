@@ -177,6 +177,10 @@ def main():
                 player.rect.x -= 75
             if keys[pygame.K_RIGHT] and not player.rect.x == 525:
                 player.rect.x += 75
+            if keys[pygame.K_SPACE] and Settings.game_over:
+                    score = 0
+                    Settings.game_over = False
+                    main()
         if pygame.time.get_ticks() - last_car_time > 300:
             last_car_time = pygame.time.get_ticks()
             which_row = random.randint(0,5)
@@ -211,15 +215,17 @@ def main():
             time_start = pygame.time.get_ticks()/1000 + 1
         if time_int <= 0:
             Settings.game_over = True
-        if score == 4:
-            level += 1
-            score = 0
+        if score % 4 == 0 and not score == 0:
+            level = int(score/4 + 1)
+            lives = 3
         if lives == 0:
             Settings.game_over = True
+            if score > Settings.high_score:
+                Settings.high_score = score
         if Settings.game_over == True:
             screen.fill(Settings.colors['white'])
             game_over_group.draw(screen)
-            score_text = Settings.font.render(f"Score: {int(Settings.score)}", True, Settings.colors['black'])
+            score_text = Settings.font.render(f"Score: {int(score)}", True, Settings.colors['black'])
             high_score_text = Settings.font.render(f"High Score: {int(Settings.high_score)}", True, Settings.colors['black'])
             screen.blit(score_text, (200, 220))
             screen.blit(high_score_text, (200, 250))
@@ -245,8 +251,8 @@ def main():
             screen.blit(level_text, (300, 10))
             lives_text = Settings.font.render(f"Lives: {lives}", True, Settings.colors['black'])
             screen.blit(lives_text, (400, 10))
-            pygame.display.flip()
             clock.tick(Settings.FPS)
+        pygame.display.flip()
     pygame.quit()
 
 
