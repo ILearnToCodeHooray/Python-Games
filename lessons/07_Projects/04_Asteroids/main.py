@@ -1,13 +1,14 @@
 import pygame
 import math
 from pathlib import Path
-
+import random
+pygame.init()
 assets = Path(__file__).parent / "images"
 
 class Settings:
     """Class to store game configuration.""" 
 
-    width = 800
+    width = 600
     height = 600
     fps = 60
     triangle_size = 20
@@ -101,7 +102,7 @@ class Spaceship(pygame.sprite.Sprite):
   
             self.velocity = (pygame.Vector2(0, -1).rotate(self.angle))*self.acceleration
             self.acceleration = self.acceleration * 1.01
-        elif not keys[pygame.K_UP]:
+        else:
             self.velocity = self.velocity*self.acceleration
             self.acceleration = 0.9
 
@@ -112,6 +113,21 @@ class Spaceship(pygame.sprite.Sprite):
         
         self.rect.center += self.velocity
 
+        screen_width = self.settings.width
+        screen_height = self.settings.height
+
+        if self.rect.right < 0:
+            self.rect.x = screen_width
+            
+        if self.rect.left > screen_width:
+            self.rect.x = 0
+
+        if self.rect.top > screen_height:
+            self.rect.y = 0
+
+        if self.rect.bottom < 0:
+            self.rect.y = screen_height
+
         # Dont forget this part! If you don't call the Sprite update method, the
         # sprite will not be drawn
         super().update()
@@ -120,6 +136,44 @@ class Spaceship(pygame.sprite.Sprite):
     # Sprite class already has a draw method that will draw the image on the
     # screen. We only need to add the sprite to a group and the group will take
     # care of drawing the sprite.
+
+class Asteroid(pygame.sprite.Sprite):
+    def __init__(self, settings,position, velocity, angle):
+        super().__init__()
+        self.velocity = pygame.Vector2(0, -1).rotate(angle) * velocity
+        self.size = random.randint(25, 50)
+        self.settings = settings
+        self.game = None
+        asteroid_image = pygame.image.load(assets/"asteroid1.png").convert_alpha()
+        self.image = pygame.transform.scale(asteroid_image, (self.size, self.size))
+        self.half_size = self.size/2
+        self.rect = self.image.get_rect(center=position)
+
+    def update(self):
+        self.rect.center += self.velocity
+        self.rect = self.image.get_rect(center=self.rect.center)
+        
+        self.rect.center += self.velocity
+
+        screen_width = self.settings.width
+        screen_height = self.settings.height
+
+        if self.rect.right < 0:
+            self.rect.x = screen_width
+            
+        if self.rect.left > screen_width:
+            self.rect.x = 0
+
+        if self.rect.top > screen_height:
+            self.rect.y = 0
+
+        if self.rect.bottom < 0:
+            self.rect.y = screen_height
+
+        # Dont forget this part! If you don't call the Sprite update method, the
+        # sprite will not be drawn
+        super().update()
+
 class AlienSpaceship(Spaceship):
     
     def create_spaceship_image(self):
@@ -170,7 +224,7 @@ class Game:
     def __init__(self, settings):
         pygame.init()
         pygame.key.set_repeat(1250, 1250)
-        
+        self.side = random.randint(1,4)
         self.settings = settings
         self.screen = pygame.display.set_mode((self.settings.width, self.settings.height))
         
@@ -181,6 +235,7 @@ class Game:
         self.running = True
 
         self.all_sprites = pygame.sprite.Group()
+        self.asteroids = pygame.sprite.Group()
 
     def add(self, sprite):
         """Adds a sprite to the game. Really important! This group is used to
@@ -190,18 +245,47 @@ class Game:
 
         self.all_sprites.add(sprite)
 
+        if isinstance(sprite, Asteroid):
+            self.asteroids.add(sprite)
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
 
-    def update(self):
+    def make_asteroid(self):
+        """Creates and fires a projectile."""
+        if self.side == (1):
+            self.ast_x = 0
+            self.ast_y = random.randint(0,400)
+            self.side = random.randint(1,4)
+        elif self.side == (2):
+            self.ast_x = 400
+            self.ast_y = random.randint(0,400)
+            self.side = random.randint(1,4)
+        elif self.side == (3):
+            self.ast_x = random.randint(0,400)
+            self.ast_y = 0
+        elif self.side == (4):
+            self.ast_x = random.randint(0,400)
+            self.ast_y = 400
+        new_asteroid = Asteroid(
+            self.settings,
+            position=(self.ast_x, self.ast_y),
+            angle=random.randint(0, 360),
+            velocity=random.randint(1, 3),            
+        )
+        self.add(new_asteroid)   
 
+    def update(self):
+        if random.randint(1, 100) == 5:
+            self.make_asteroid()
         # We only need to call the update method of the group, and it will call
         # the update method of all sprites But, we have to make sure to add all
         # of the sprites to the group, so they are updated.
         self.all_sprites.update()
 
+        
     def draw(self):
         self.screen.fill(self.settings.colors["black"])
 
@@ -215,14 +299,14 @@ class Game:
         """Main Loop for the game."""
         
        
-        
-        while self.running:
-            self.handle_events()
-            self.update()
-            self.draw()
-            self.clock.tick(self.settings.fps)
+        while True:
+            while self.running:
+                self.handle_events()
+                self.update()
+                self.draw()
+                self.clock.tick(self.settings.fps)
 
-        pygame.quit()
+            pygame.quit()
 
 
 if __name__ == "__main__":
