@@ -16,7 +16,7 @@ class Settings:
     projectile_size = 11
     shoot_delay = 250  # 250 milliseconds between shots, or 4 shots per second
     colors = {"white": (255, 255, 255), "black": (0, 0, 0), "red": (255, 0, 0)}
-    Score = 0
+    score = 0
 
 
 # Notice that this Spaceship class is a bit different: it is a subclass of
@@ -175,12 +175,27 @@ class Asteroid(pygame.sprite.Sprite):
         # sprite will not be drawn
         super().update()
 
-class AlienSpaceship(Spaceship):
-    
+class AlienSpaceship(pygame.sprite.Sprite):
+    def __init__(self, settings, position):
+        super().__init__()
+
+        self.game = None
+        self.settings = settings
+        self.angle = 0
+        self.original_image = self.create_spaceship_image()
+        self.velocity = pygame.Vector2(0,0)
+        self.image = self.original_image.copy()
+        self.rect = self.image.get_rect(center=position)
     def create_spaceship_image(self):
         """Creates the spaceship shape as a surface."""
         
         return pygame.image.load(assets/'alien1.gif')
+    
+    def update(self):
+        if random.randint(0,10) == 4:
+            self.angle = random.randint (0,360)
+        self.velocity = (pygame.Vector2(0, -1).rotate(self.angle))
+        self.rect = self.image.get_rect(center=self.rect.center)
         
 
 class Projectile(pygame.sprite.Sprite):
@@ -237,6 +252,7 @@ class Game:
         self.projectiles = pygame.sprite.Group()
         self.all_sprites = pygame.sprite.Group()
         self.asteroids = pygame.sprite.Group()
+        self.ships = pygame.sprite.Group()
 
     def add(self, sprite):
         """Adds a sprite to the game. Really important! This group is used to
@@ -249,7 +265,9 @@ class Game:
         if isinstance(sprite, Asteroid):
             self.asteroids.add(sprite)
         elif isinstance(sprite, Projectile):
-            self.projectiles.add(sprite)       
+            self.projectiles.add(sprite)
+        elif isinstance(sprite, Spaceship):
+            self.ships.add(sprite)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -280,9 +298,32 @@ class Game:
         )
         self.add(new_asteroid)   
 
+    def make_alien(self):
+        if self.side == (1):
+            self.alien_x = 0
+            self.alien_y = random.randint(0,400)
+            self.side = random.randint(1,4)
+        elif self.side == (2):
+            self.alien_x = 400
+            self.alien_y = random.randint(0,400)
+            self.side = random.randint(1,4)
+        elif self.side == (3):
+            self.alien_x = random.randint(0,400)
+            self.alien_y = 0
+        elif self.side == (4):
+            self.alien_x = random.randint(0,400)
+            self.alien_y = 400
+        new_alien = AlienSpaceship(
+            self.settings,
+            position=(self.alien_x, self.alien_y)       
+        )
+        print("new ship") 
+        self.add(new_alien)
     def update(self):
         if random.randint(1, 100) == 5:
             self.make_asteroid()
+        if random.randint(1, 500) == 5:
+            self.make_alien()
         # We only need to call the update method of the group, and it will call
         # the update method of all sprites But, we have to make sure to add all
         # of the sprites to the group, so they are updated.
@@ -295,6 +336,15 @@ class Game:
            
         if laser_collider:
             Settings.score += 1
+
+        player_collider = pygame.sprite.groupcollide(
+            self.ships, self.asteroids,
+            False, True,
+            collided=pygame.sprite.collide_mask
+        )
+        if player_collider:
+            pygame.quit()
+
     def draw(self):
         self.screen.fill(self.settings.colors["black"])
 
@@ -324,7 +374,7 @@ if __name__ == "__main__":
 
     game = Game(settings)
 
-    spaceship = AlienSpaceship(
+    spaceship = Spaceship(
         settings, position=(settings.width // 2, settings.height // 2)
     )
     game.add(spaceship)
