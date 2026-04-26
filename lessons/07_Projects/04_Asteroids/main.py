@@ -16,6 +16,7 @@ class Settings:
     projectile_size = 11
     shoot_delay = 250  # 250 milliseconds between shots, or 4 shots per second
     colors = {"white": (255, 255, 255), "black": (0, 0, 0), "red": (255, 0, 0)}
+    Score = 0
 
 
 # Notice that this Spaceship class is a bit different: it is a subclass of
@@ -233,7 +234,7 @@ class Game:
 
         self.clock = pygame.time.Clock()
         self.running = True
-
+        self.projectiles = pygame.sprite.Group()
         self.all_sprites = pygame.sprite.Group()
         self.asteroids = pygame.sprite.Group()
 
@@ -247,6 +248,8 @@ class Game:
 
         if isinstance(sprite, Asteroid):
             self.asteroids.add(sprite)
+        elif isinstance(sprite, Projectile):
+            self.projectiles.add(sprite)       
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -284,8 +287,14 @@ class Game:
         # the update method of all sprites But, we have to make sure to add all
         # of the sprites to the group, so they are updated.
         self.all_sprites.update()
-
-        
+        laser_collider = pygame.sprite.groupcollide(
+            self.projectiles, self.asteroids,
+            True, True,
+            collided=pygame.sprite.collide_mask
+        )
+           
+        if laser_collider:
+            Settings.score += 1
     def draw(self):
         self.screen.fill(self.settings.colors["black"])
 
