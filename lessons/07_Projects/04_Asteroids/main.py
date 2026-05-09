@@ -15,7 +15,7 @@ class Settings:
     projectile_speed = 5 
     projectile_size = 11
     shoot_delay = 250  # 250 milliseconds between shots, or 4 shots per second
-    colors = {"white": (255, 255, 255), "black": (0, 0, 0), "red": (255, 0, 0)}
+    colors = {"white": (255, 255, 255), "black": (0, 0, 0), "red": (255, 0, 0), "blue": (0, 0, 255)}
     score = 0
 
 
@@ -41,7 +41,7 @@ class Spaceship(pygame.sprite.Sprite):
         self.acceleration = 1
         # For Sprites, the image and rect attributes are part of the Sprite class
         # and are important. The image is the surface that will be drawn on the screen
-
+        spaceship_position = position
         self.image = self.original_image.copy() 
         self.rect = self.image.get_rect(center=position)
 
@@ -100,12 +100,12 @@ class Spaceship(pygame.sprite.Sprite):
         if keys[pygame.K_SPACE] and self.ready_to_shoot():
             self.fire_projectile()
         if keys[pygame.K_UP]:
-  
             self.velocity = (pygame.Vector2(0, -1).rotate(self.angle))*self.acceleration
-            self.acceleration = self.acceleration * 1.01
+            if self.acceleration < 4:
+                self.acceleration = self.acceleration * 1.03
         else:
-            self.velocity = self.velocity*self.acceleration
             self.acceleration = 0.9
+            self.velocity = self.velocity*self.acceleration
 
         self.image = pygame.transform.rotate(self.original_image, -self.angle)
 
@@ -128,7 +128,6 @@ class Spaceship(pygame.sprite.Sprite):
 
         if self.rect.bottom < 0:
             self.rect.y = screen_height
-
         # Dont forget this part! If you don't call the Sprite update method, the
         # sprite will not be drawn
         super().update()
@@ -190,13 +189,24 @@ class AlienSpaceship(pygame.sprite.Sprite):
         """Creates the spaceship shape as a surface."""
         
         return pygame.image.load(assets/'alien1.gif')
-    
+    def fire_projectile(self):
+        """Creates and fires a projectile."""
+
+        new_projectile = Alien_laser(
+            self.settings,
+            position=self.rect.center,
+            velocity=self.settings.projectile_speed,
+        )
+        self.game.add(new_projectile)
     def update(self):
-        if random.randint(0,10) == 4:
+        if random.randint(0,40) == 4:
             self.angle = random.randint (0,360)
+        if random.randint(0, 10) == 7:
+            self.fire_projectile()
         self.velocity = (pygame.Vector2(0, -1).rotate(self.angle))
         self.rect = self.image.get_rect(center=self.rect.center)
-        
+        self.rect.center += self.velocity
+    
 
 class Projectile(pygame.sprite.Sprite):
     """Class to handle projectile movement and drawing."""
@@ -234,6 +244,35 @@ class Projectile(pygame.sprite.Sprite):
         self.rect.center += self.velocity
 
 
+class Alien_laser:
+    def __init__(self, settings, position, velocity, alien_position):
+        super().__init__()
+
+        self.game = None  # will be set in Game.add()
+        self.settings = settings
+
+        # The (0,-1) part makes the vector point up, and the rotate method
+        # rotates the vector by the given angle. Finally, we multiply the vector
+        # by the velocity (scalar) to get the final velocity vector.
+        self.velocity = pygame.Vector2(alien_position) * velocity
+
+        # Dont forget to create the image and rect attributes for the sprite
+        self.image = pygame.Surface(
+            (self.settings.projectile_size, self.settings.projectile_size),
+            pygame.SRCALPHA,
+        )
+
+        half_size = self.settings.projectile_size // 2
+
+        pygame.draw.circle(
+            self.image,
+            self.settings.colors["blue"],
+            center=(half_size + 1, half_size + 1),
+            radius=half_size,
+        )
+
+        # Notice that we are using the rect attribute to store the position of the projectile
+        self.rect = self.image.get_rect(center=position)
 class Game:
     """Class to manage the game loop and objects."""
 
@@ -253,6 +292,7 @@ class Game:
         self.all_sprites = pygame.sprite.Group()
         self.asteroids = pygame.sprite.Group()
         self.ships = pygame.sprite.Group()
+        self.alien_lasers = pygame.sprite.Group()
 
     def add(self, sprite):
         """Adds a sprite to the game. Really important! This group is used to
@@ -268,6 +308,8 @@ class Game:
             self.projectiles.add(sprite)
         elif isinstance(sprite, Spaceship):
             self.ships.add(sprite)
+        elif isinstance(sprite, Alien_laser):
+            self.alien_lasers.add(sprite)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -317,8 +359,16 @@ class Game:
             self.settings,
             position=(self.alien_x, self.alien_y)       
         )
-        print("new ship") 
         self.add(new_alien)
+
+    def shoot_alien_laser(self):
+        new_laser = Alien_laser(
+            settings=self.settings, 
+            position=(AlienSpaceship.rect.x, AlienSpaceship.rect.y),
+            velocity=self.settings.projectile_speed,
+            alien_position=(AlienSpaceship.rect.x, AlienSpaceship.rect.y)
+        )
+        self.add(new_laser)
     def update(self):
         if random.randint(1, 100) == 5:
             self.make_asteroid()
@@ -333,7 +383,7 @@ class Game:
             True, True,
             collided=pygame.sprite.collide_mask
         )
-           
+
         if laser_collider:
             Settings.score += 1
 
