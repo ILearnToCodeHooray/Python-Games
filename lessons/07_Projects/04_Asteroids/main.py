@@ -67,7 +67,6 @@ class Spaceship(pygame.sprite.Sprite):
             return True
         return False
             
-
     def fire_projectile(self):
         """Creates and fires a projectile."""
 
@@ -98,7 +97,7 @@ class Spaceship(pygame.sprite.Sprite):
             self.angle += 5
 
         if keys[pygame.K_SPACE] and self.ready_to_shoot():
-            self.fire_projectile()
+            self.fire_projectile(self.rect.center)
         if keys[pygame.K_UP]:
             self.velocity = (pygame.Vector2(0, -1).rotate(self.angle))*self.acceleration
             if self.acceleration < 4:
@@ -179,7 +178,7 @@ class AlienSpaceship(pygame.sprite.Sprite):
         super().__init__()
 
         self.game = None
-        self.settings = settings
+        self.settings = settings 
         self.angle = 0
         self.original_image = self.create_spaceship_image()
         self.velocity = pygame.Vector2(0,0)
@@ -189,20 +188,27 @@ class AlienSpaceship(pygame.sprite.Sprite):
         """Creates the spaceship shape as a surface."""
         
         return pygame.image.load(assets/'alien1.gif')
-    def fire_projectile(self):
+    def fire_projectile(self, position):
         """Creates and fires a projectile."""
 
         new_projectile = Alien_laser(
             self.settings,
             position=self.rect.center,
             velocity=self.settings.projectile_speed,
+            alien_position=position
         )
         self.game.add(new_projectile)
     def update(self):
         if random.randint(0,40) == 4:
             self.angle = random.randint (0,360)
         if random.randint(0, 10) == 7:
-            self.fire_projectile()
+            new_projectile = Alien_laser(
+            self.settings,
+            position=self.rect.center,
+            velocity=self.settings.projectile_speed,
+            alien_position=spaceship.rect.center
+            )
+            self.game.add(new_projectile)
         self.velocity = (pygame.Vector2(0, -1).rotate(self.angle))
         self.rect = self.image.get_rect(center=self.rect.center)
         self.rect.center += self.velocity
@@ -242,6 +248,7 @@ class Projectile(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.center += self.velocity
+        print(self.rect.center)
 
 
 class Alien_laser:
@@ -270,9 +277,17 @@ class Alien_laser:
             center=(half_size + 1, half_size + 1),
             radius=half_size,
         )
+        self.rect = self.image.get_rect(center=position)
+    def update(self):
+        self.rect.center += self.velocity
+        print(self.rect.center)
 
         # Notice that we are using the rect attribute to store the position of the projectile
-        self.rect = self.image.get_rect(center=position)
+projectiles = pygame.sprite.Group()
+all_sprites = pygame.sprite.Group()
+asteroids = pygame.sprite.Group()
+ships = pygame.sprite.Group()
+alien_lasers = pygame.sprite.Group()
 class Game:
     """Class to manage the game loop and objects."""
 
@@ -288,11 +303,6 @@ class Game:
 
         self.clock = pygame.time.Clock()
         self.running = True
-        self.projectiles = pygame.sprite.Group()
-        self.all_sprites = pygame.sprite.Group()
-        self.asteroids = pygame.sprite.Group()
-        self.ships = pygame.sprite.Group()
-        self.alien_lasers = pygame.sprite.Group()
 
     def add(self, sprite):
         """Adds a sprite to the game. Really important! This group is used to
@@ -300,16 +310,16 @@ class Game:
 
         sprite.game = self
 
-        self.all_sprites.add(sprite)
+        all_sprites.add(sprite)
 
         if isinstance(sprite, Asteroid):
-            self.asteroids.add(sprite)
+            asteroids.add(sprite)
         elif isinstance(sprite, Projectile):
-            self.projectiles.add(sprite)
+            projectiles.add(sprite)
         elif isinstance(sprite, Spaceship):
-            self.ships.add(sprite)
+            ships.add(sprite)
         elif isinstance(sprite, Alien_laser):
-            self.alien_lasers.add(sprite)
+            alien_lasers.add(sprite)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -377,9 +387,10 @@ class Game:
         # We only need to call the update method of the group, and it will call
         # the update method of all sprites But, we have to make sure to add all
         # of the sprites to the group, so they are updated.
-        self.all_sprites.update()
+        projectiles.update()
+        all_sprites.update()
         laser_collider = pygame.sprite.groupcollide(
-            self.projectiles, self.asteroids,
+            projectiles, asteroids,
             True, True,
             collided=pygame.sprite.collide_mask
         )
@@ -388,7 +399,7 @@ class Game:
             Settings.score += 1
 
         player_collider = pygame.sprite.groupcollide(
-            self.ships, self.asteroids,
+            ships, asteroids,
             False, True,
             collided=pygame.sprite.collide_mask
         )
@@ -400,7 +411,7 @@ class Game:
 
         # The sprite group has a draw method that will draw all of the sprites in
         # the group.
-        self.all_sprites.draw(self.screen)
+        all_sprites.draw(self.screen)
 
         pygame.display.flip()
 
