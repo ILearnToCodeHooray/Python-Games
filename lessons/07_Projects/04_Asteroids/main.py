@@ -7,7 +7,7 @@ assets = Path(__file__).parent / "images"
 
 class Settings:
     """Class to store game configuration.""" 
-
+    font = pygame.font.SysFont(None, 36)
     width = 600
     height = 600
     fps = 60
@@ -17,7 +17,7 @@ class Settings:
     shoot_delay = 250  # 250 milliseconds between shots, or 4 shots per second
     colors = {"white": (255, 255, 255), "black": (0, 0, 0), "red": (255, 0, 0), "blue": (0, 0, 255)}
     score = 0
-
+    lives = 3
 
 # Notice that this Spaceship class is a bit different: it is a subclass of
 # Sprite. Rather than a plain class, like in the previous examples, this class
@@ -97,7 +97,7 @@ class Spaceship(pygame.sprite.Sprite):
             self.angle += 5
 
         if keys[pygame.K_SPACE] and self.ready_to_shoot():
-            self.fire_projectile(self.rect.center)
+            self.fire_projectile()
         if keys[pygame.K_UP]:
             self.velocity = (pygame.Vector2(0, -1).rotate(self.angle))*self.acceleration
             if self.acceleration < 4:
@@ -194,21 +194,14 @@ class AlienSpaceship(pygame.sprite.Sprite):
         new_projectile = Alien_laser(
             self.settings,
             position=self.rect.center,
-            velocity=self.settings.projectile_speed,
             alien_position=position
         )
         self.game.add(new_projectile)
     def update(self):
         if random.randint(0,40) == 4:
             self.angle = random.randint (0,360)
-        if random.randint(0, 10) == 7:
-            new_projectile = Alien_laser(
-            self.settings,
-            position=self.rect.center,
-            velocity=self.settings.projectile_speed,
-            alien_position=spaceship.rect.center
-            )
-            self.game.add(new_projectile)
+        if random.randint(0, 100) == 7:
+            self.fire_projectile(spaceship.rect.center)
         self.velocity = (pygame.Vector2(0, -1).rotate(self.angle))
         self.rect = self.image.get_rect(center=self.rect.center)
         self.rect.center += self.velocity
@@ -248,20 +241,20 @@ class Projectile(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.center += self.velocity
-        print(self.rect.center)
 
 
-class Alien_laser:
-    def __init__(self, settings, position, velocity, alien_position):
+class Alien_laser(pygame.sprite.Sprite):
+    def __init__(self, settings, position, alien_position):
         super().__init__()
 
         self.game = None  # will be set in Game.add()
         self.settings = settings
-
+        self.velo = 0.05
+        self.alien_position = alien_position
         # The (0,-1) part makes the vector point up, and the rotate method
         # rotates the vector by the given angle. Finally, we multiply the vector
         # by the velocity (scalar) to get the final velocity vector.
-        self.velocity = pygame.Vector2(alien_position) * velocity
+        self.velocity = pygame.Vector2(self.alien_position) * self.velo
 
         # Dont forget to create the image and rect attributes for the sprite
         self.image = pygame.Surface(
@@ -279,8 +272,9 @@ class Alien_laser:
         )
         self.rect = self.image.get_rect(center=position)
     def update(self):
+        self.velocity = pygame.Vector2(self.alien_position) * self.velo
         self.rect.center += self.velocity
-        print(self.rect.center)
+        self.velo += 0.0001
 
         # Notice that we are using the rect attribute to store the position of the projectile
 projectiles = pygame.sprite.Group()
@@ -297,7 +291,6 @@ class Game:
         self.side = random.randint(1,4)
         self.settings = settings
         self.screen = pygame.display.set_mode((self.settings.width, self.settings.height))
-        
 
         pygame.display.set_caption("Really Boring Asteroids")
 
@@ -398,13 +391,22 @@ class Game:
         if laser_collider:
             Settings.score += 1
 
-        player_collider = pygame.sprite.groupcollide(
+        player_collider_asteroids = pygame.sprite.groupcollide(
             ships, asteroids,
             False, True,
             collided=pygame.sprite.collide_mask
         )
-        if player_collider:
-            pygame.quit()
+
+        player_collider_lasers = pygame.sprite.groupcollide(
+            ships, alien_lasers,
+            False, True,
+            collided=pygame.sprite.collide_mask
+        )
+        if player_collider_asteroids or player_collider_lasers:
+            Settings.lives -= 1
+            
+            if Settings.lives == 0:
+                pygame.quit()
 
     def draw(self):
         self.screen.fill(self.settings.colors["black"])
@@ -412,7 +414,8 @@ class Game:
         # The sprite group has a draw method that will draw all of the sprites in
         # the group.
         all_sprites.draw(self.screen)
-
+        lives_text = Settings.font.render(f"Lives: {int(Settings.lives)}", True, Settings.colors['white'])
+        self.screen.blit(lives_text, (10, 10))
         pygame.display.flip()
 
     def run(self):
