@@ -2,6 +2,7 @@ import pygame
 import math
 from pathlib import Path
 import random
+import numpy
 pygame.init()
 assets = Path(__file__).parent / "images"
 
@@ -81,6 +82,10 @@ class Spaceship(pygame.sprite.Sprite):
         # need to add the projectile to the group to make sure it is updated.
         self.game.add(new_projectile)
 
+    def reset_pos(self):
+        self.rect.center = (300, 300)
+        self.velocity = pygame.Vector2(0, 0)
+
 
     # The Sprite class defines an update method that is called every frame. We
     # can override this method to add our own functionality. In this case, we
@@ -105,7 +110,8 @@ class Spaceship(pygame.sprite.Sprite):
         else:
             self.acceleration = 0.9
             self.velocity = self.velocity*self.acceleration
-
+        if keys[pygame.K_LSHIFT]:
+            self.rect.center = (random.randint(0, 600), random.randint(0, 600))
         self.image = pygame.transform.rotate(self.original_image, -self.angle)
 
         # Reassigning the rect because the image has changed.
@@ -249,12 +255,12 @@ class Alien_laser(pygame.sprite.Sprite):
 
         self.game = None  # will be set in Game.add()
         self.settings = settings
-        self.velo = 0.05
+        self.speed = 10
         self.alien_position = alien_position
         # The (0,-1) part makes the vector point up, and the rotate method
         # rotates the vector by the given angle. Finally, we multiply the vector
         # by the velocity (scalar) to get the final velocity vector.
-        self.velocity = pygame.Vector2(self.alien_position) * self.velo
+        self.velocity = pygame.Vector2(self.alien_position) * self.speed
 
         # Dont forget to create the image and rect attributes for the sprite
         self.image = pygame.Surface(
@@ -271,11 +277,12 @@ class Alien_laser(pygame.sprite.Sprite):
             radius=half_size,
         )
         self.rect = self.image.get_rect(center=position)
+        self.target_pos = pygame.Vector2(self.alien_position) - pygame.Vector2(self.rect.center)
+        self.norm_target_pos = numpy.linalg.norm(pygame.Vector2(self.alien_position))
+        self.velocity = self.target_pos / self.norm_target_pos * self.speed
     def update(self):
-        self.velocity = pygame.Vector2(self.alien_position) * self.velo
         self.rect.center += self.velocity
-        self.velo += 0.0001
-
+        self.speed += 1
         # Notice that we are using the rect attribute to store the position of the projectile
 projectiles = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
@@ -369,7 +376,7 @@ class Game:
             settings=self.settings, 
             position=(AlienSpaceship.rect.x, AlienSpaceship.rect.y),
             velocity=self.settings.projectile_speed,
-            alien_position=(AlienSpaceship.rect.x, AlienSpaceship.rect.y)
+            alien_position=(Alien_laser.rect.center)
         )
         self.add(new_laser)
     def update(self):
@@ -404,7 +411,7 @@ class Game:
         )
         if player_collider_asteroids or player_collider_lasers:
             Settings.lives -= 1
-            
+            spaceship.reset_pos()
             if Settings.lives == 0:
                 pygame.quit()
 
