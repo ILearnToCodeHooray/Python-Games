@@ -149,7 +149,9 @@ class Asteroid(pygame.sprite.Sprite):
         self.size = random.randint(25, 50)
         self.settings = settings
         self.game = None
-        asteroid_image = pygame.image.load(assets/"asteroid1.png").convert_alpha()
+        asteroid_image = pygame.image.load(assets/"spaceMeteors_002.png")
+        asteroid_image.set_colorkey("white")
+        asteroid_image.convert_alpha()
         self.image = pygame.transform.scale(asteroid_image, (self.size, self.size))
         self.half_size = self.size/2
         self.rect = self.image.get_rect(center=position)
@@ -289,6 +291,7 @@ all_sprites = pygame.sprite.Group()
 asteroids = pygame.sprite.Group()
 ships = pygame.sprite.Group()
 alien_lasers = pygame.sprite.Group()
+aliens = pygame.sprite.Group()
 class Game:
     """Class to manage the game loop and objects."""
 
@@ -320,6 +323,8 @@ class Game:
             ships.add(sprite)
         elif isinstance(sprite, Alien_laser):
             alien_lasers.add(sprite)
+        elif isinstance(sprite, AlienSpaceship):
+            aliens.add(sprite)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -396,7 +401,7 @@ class Game:
         )
 
         if laser_collider:
-            Settings.score += 1
+            Settings.score += 5
 
         player_collider_asteroids = pygame.sprite.groupcollide(
             ships, asteroids,
@@ -409,12 +414,21 @@ class Game:
             False, True,
             collided=pygame.sprite.collide_mask
         )
+
+        alien_collider_lasers = pygame.sprite.groupcollide(
+            aliens, projectiles,
+            True, True,
+            collided=pygame.sprite.collide_mask
+            
+        )
         if player_collider_asteroids or player_collider_lasers:
             Settings.lives -= 1
             spaceship.reset_pos()
             if Settings.lives == 0:
                 pygame.quit()
 
+        if alien_collider_lasers:
+            Settings.score += 20
     def draw(self):
         self.screen.fill(self.settings.colors["black"])
 
@@ -422,7 +436,9 @@ class Game:
         # the group.
         all_sprites.draw(self.screen)
         lives_text = Settings.font.render(f"Lives: {int(Settings.lives)}", True, Settings.colors['white'])
-        self.screen.blit(lives_text, (10, 10))
+        score_text = Settings.font.render(f"Score: {(Settings.score)}", True, Settings.colors['white'])
+        self.screen.blit(score_text, (10, 10))
+        self.screen.blit(lives_text, (120, 10))
         pygame.display.flip()
 
     def run(self):
