@@ -15,17 +15,18 @@ class Colors:
 
 class Settings:
     """Settings for the game"""
-    width: int = 500
-    height: int = 500
+    width: int = 600
+    height: int = 400
     gravity: float = 0.3
     player_start_x: int = 100
     player_start_y: int = 100
     player_v_y: float = 0  # Initial y velocity
-    player_v_x: float = 4  # Initial x velocity
-    player_width: int = 20
-    player_height: int = 20
+    player_v_x: float = 0  # Initial x velocity
+    player_width: int = 30
+    player_height: int = 30
     player_jump_velocity: float = 15
     frame_rate: int = 15
+    move = pygame.Vector2(0, 1)
 
 class Game:
     """Main object for the top level of the game. Holds the main loop and other
@@ -70,7 +71,8 @@ class Player(pygame.sprite.Sprite):
         self.game = game
         settings = self.game.settings
         self.original_image = pygame.image.load(d/'lander.png')
-        self.image = self.original_image.copy()
+        self.original_image_scaled = pygame.transform.scale(self.original_image, (self.original_image.get_width() / 2, self.original_image.get_height() / 2))
+        self.image = self.original_image_scaled.copy()
         self.width = settings.player_width
         self.height = settings.player_height
         self.angle = 0
@@ -123,22 +125,24 @@ class Player(pygame.sprite.Sprite):
         self.update_pos()
 
     def update_v(self):
-            """Update the player's velocity based on gravity and bounce on edges"""
+        """Update the player's velocity based on gravity and bounce on edges"""
             
-            self.vel += self.game.gravity  # Add gravity to the velocity
+        self.vel += self.game.gravity  # Add gravity to the velocity
 
-            if self.at_bottom() and self.going_down():
-                self.vel.y = 0
+        if self.at_bottom() and self.going_down():
+            self.vel.y = 0
+            self.vel.x = 0 
 
-            if self.at_top() and self.going_up():
-                self.vel.y = -self.vel.y # Bounce off the top. 
+        if self.at_top() and self.going_up():
+            self.vel.y = 0
 
             # If the player hits one side of the screen or the other, bounce the
             # player. we are also checking if the player has a velocity going farther
             # off the screeen, because we don't want to bounce the player if it's
             # already going away from the edge
-            
-
+        if self.at_bottom:
+            drag = (0, 0)
+        else:
             drag = -self.vel * 0.1
             self.vel += drag
 
@@ -164,12 +168,19 @@ class Player(pygame.sprite.Sprite):
             self.pos.x = self.game.settings.width - self.width
 
         if pygame.key.get_pressed()[pygame.K_LEFT]:
-            self.angle -= 5
-        if pygame.key.get_pressed()[pygame.K_RIGHT]:
             self.angle += 5
-
+            Settings.move = pygame.Vector2(0,1)
+            Settings.move.rotate_ip(self.angle)
+        if pygame.key.get_pressed()[pygame.K_RIGHT]:
+            self.angle -= 5
+            Settings.move = pygame.Vector2(0,1)
+            Settings.move.rotate_ip(self.angle)
+        print(Settings.move)
+        if pygame.key.get_pressed()[pygame.K_UP]:
+            self.vel -= Settings.move
     def draw(self, screen):
-        screen.blit(self.image, (self.pos.x, self.pos.y))
+        self.image_rotated = pygame.transform.rotate(self.image, self.angle)
+        screen.blit(self.image_rotated, (self.pos.x, self.pos.y))
 
 settings = Settings()
 game = Game(settings)
