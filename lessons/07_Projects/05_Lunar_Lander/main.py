@@ -49,6 +49,19 @@ class Game:
 
         # Turn Gravity into a vector
         self.gravity = pygame.Vector2(0, self.settings.gravity)
+        self.v1_tup = (0,400)
+        self.v2_tup = (10, 350)
+        self.v3_tup = (50, 340)
+        self.v4_tup = (150, 280)
+        self.v5_tup = (200, 330)
+        self.v6_tup = (230, 330)
+        self.v7_tup = (280, 380)
+        self.v8_tup = (330, 380)
+        self.v9_tup = (400, 300)
+        self.v10_tup = (420, 320)
+        self.v11_tup = (470, 320)
+        self.v12_tup = (530, 270)
+        self.v13_tup = (600, 270)
 
     def run(self):
         """Main game loop"""
@@ -70,19 +83,19 @@ class Game:
             self.screen.blit(score_text, (150, 10))
             lives_text = Settings.font.render(f"Lives: {(Settings.lives)}", True, Settings.colors['black'])
             self.screen.blit(lives_text, (300, 10))
-            v1 = pygame.math.Vector2(0, 400)
-            v2 = pygame.math.Vector2(10, 350)
-            v3 = pygame.math.Vector2(50, 340)
-            v4 = pygame.math.Vector2(150, 280)
-            v5 = pygame.math.Vector2(200, 330)
-            v6 = pygame.math.Vector2(230, 330)
-            v7 = pygame.math.Vector2(280, 380)
-            v8 = pygame.math.Vector2(330, 380)
-            v9 = pygame.math.Vector2(400, 300)
-            v10 = pygame.math.Vector2(420, 320)
-            v11 = pygame.math.Vector2(470, 320)
-            v12 = pygame.math.Vector2(530, 270)
-            v13 = pygame.math.Vector2(600, 270)
+            v1 = pygame.math.Vector2(self.v1_tup)
+            v2 = pygame.math.Vector2(self.v2_tup)
+            v3 = pygame.math.Vector2(self.v3_tup)
+            v4 = pygame.math.Vector2(self.v4_tup)
+            v5 = pygame.math.Vector2(self.v5_tup)
+            v6 = pygame.math.Vector2(self.v6_tup)
+            v7 = pygame.math.Vector2(self.v7_tup)
+            v8 = pygame.math.Vector2(self.v8_tup)
+            v9 = pygame.math.Vector2(self.v9_tup)
+            v10 = pygame.math.Vector2(self.v10_tup)
+            v11 = pygame.math.Vector2(self.v11_tup)
+            v12 = pygame.math.Vector2(self.v12_tup)
+            v13 = pygame.math.Vector2(self.v13_tup)
             pygame.draw.line(self.screen, Settings.colors['black'], v1, v2, 2)
             pygame.draw.line(self.screen, Settings.colors['black'], v2, v3, 2)
             pygame.draw.line(self.screen, Settings.colors['black'], v3, v4, 2)
@@ -125,7 +138,7 @@ class Player(pygame.sprite.Sprite):
         
         # Player's velocity
         self.vel = pygame.Vector2(settings.player_v_x, settings.player_v_y)  # Velocity vector
-        self.rect = self.image.get_rect()
+        #self.image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))
 
     def going_up(self):
         """Check if the player is going up"""
@@ -166,9 +179,7 @@ class Player(pygame.sprite.Sprite):
 
     def update_v(self):
         """Update the player's velocity based on gravity and bounce on edges"""
-            
         self.vel += self.game.gravity  # Add gravity to the velocity
-
         if self.at_bottom() and self.going_down():
             if self.vel.y < 6 and self.vel.y != 0.3:
                 Settings.score += 1
@@ -184,6 +195,30 @@ class Player(pygame.sprite.Sprite):
                 self.pos.y = Settings.player_start_y
             self.vel.y = 0
             self.vel.x = 0 
+        if not self.rect.clipline((game.v5_tup), (game.v6_tup)) == ():
+            self.vel.y = 0
+        elif not self.rect.clipline((game.v7_tup), (game.v8_tup)) == ():
+            self.vel.y = 0
+        elif not self.rect.clipline((game.v10_tup), (game.v11_tup)) == ():
+            self.vel.y = 0
+        elif not self.rect.clipline((game.v12_tup), (game.v13_tup)) == ():
+            self.vel.y = 0
+        elif not self.rect.clipline((game.v1_tup), (game.v2_tup)) == ():
+            pygame.quit()
+        elif not self.rect.clipline((game.v2_tup), (game.v3_tup)) == ():
+            pygame.quit()  
+        elif not self.rect.clipline((game.v3_tup), (game.v4_tup)) == ():
+            pygame.quit()
+        elif not self.rect.clipline((game.v4_tup), (game.v5_tup)) == ():
+            pygame.quit()
+        elif not self.rect.clipline((game.v6_tup), (game.v7_tup)) == ():
+            pygame.quit()
+        elif not self.rect.clipline((game.v8_tup), (game.v9_tup)) == ():
+            pygame.quit()
+        elif not self.rect.clipline((game.v9_tup), (game.v10_tup)) == ():
+            pygame.quit()
+        elif not self.rect.clipline((game.v11_tup), (game.v12_tup)) == ():
+            pygame.quit()
 
         if self.at_top() and self.going_up():
             self.vel.y = 0
@@ -213,11 +248,11 @@ class Player(pygame.sprite.Sprite):
 
         # Don't let the player go off the left side of the screen
         if self.at_left():
-            self.pos.x = 0
+            self.pos.x = self.game.settings.width - self.width
   
         # Don't let the player go off the right side of the screen
         elif self.at_right():
-            self.pos.x = self.game.settings.width - self.width
+            self.pos.x = 0
 
         if pygame.key.get_pressed()[pygame.K_LEFT]:
             self.angle += 5
