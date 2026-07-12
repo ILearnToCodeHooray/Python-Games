@@ -24,8 +24,8 @@ class Settings:
     player_start_y: int = 100
     player_v_y: float = 0  # Initial y velocity
     player_v_x: float = 0  # Initial x velocity
-    player_width: int = 30
-    player_height: int = 30
+    player_width: int = 20
+    player_height: int = 20
     player_jump_velocity: float = 15
     frame_rate: int = 15
     lives = 3
@@ -49,7 +49,7 @@ class Game:
 
         # Turn Gravity into a vector
         self.gravity = pygame.Vector2(0, self.settings.gravity)
-        self.v1_tup = (0,400)
+        self.v1_tup = (0,270)
         self.v2_tup = (10, 350)
         self.v3_tup = (50, 340)
         self.v4_tup = (150, 280)
@@ -128,7 +128,7 @@ class Player(pygame.sprite.Sprite):
         self.width = settings.player_width
         self.height = settings.player_height
         self.angle = 0
-
+        self.rect = self.original_image_scaled.get_rect()
         # Vector for our jump velocity, which is just up
         self.v_jump = pygame.Vector2(0, -settings.player_jump_velocity)
 
@@ -180,6 +180,8 @@ class Player(pygame.sprite.Sprite):
     def update_v(self):
         """Update the player's velocity based on gravity and bounce on edges"""
         self.vel += self.game.gravity  # Add gravity to the velocity
+        self.rect.y = self.pos.y
+        self.rect.x = self.pos.x
         if self.at_bottom() and self.going_down():
             if self.vel.y < 6 and self.vel.y != 0.3:
                 Settings.score += 1
@@ -195,32 +197,48 @@ class Player(pygame.sprite.Sprite):
                 self.pos.y = Settings.player_start_y
             self.vel.y = 0
             self.vel.x = 0 
-        if not self.rect.clipline((game.v5_tup), (game.v6_tup)) == ():
-            self.vel.y = 0
-        elif not self.rect.clipline((game.v7_tup), (game.v8_tup)) == ():
-            self.vel.y = 0
-        elif not self.rect.clipline((game.v10_tup), (game.v11_tup)) == ():
-            self.vel.y = 0
-        elif not self.rect.clipline((game.v12_tup), (game.v13_tup)) == ():
-            self.vel.y = 0
-        elif not self.rect.clipline((game.v1_tup), (game.v2_tup)) == ():
-            pygame.quit()
-        elif not self.rect.clipline((game.v2_tup), (game.v3_tup)) == ():
-            pygame.quit()  
-        elif not self.rect.clipline((game.v3_tup), (game.v4_tup)) == ():
-            pygame.quit()
-        elif not self.rect.clipline((game.v4_tup), (game.v5_tup)) == ():
-            pygame.quit()
-        elif not self.rect.clipline((game.v6_tup), (game.v7_tup)) == ():
-            pygame.quit()
-        elif not self.rect.clipline((game.v8_tup), (game.v9_tup)) == ():
-            pygame.quit()
-        elif not self.rect.clipline((game.v9_tup), (game.v10_tup)) == ():
-            pygame.quit()
-        elif not self.rect.clipline((game.v11_tup), (game.v12_tup)) == ():
-            pygame.quit()
 
-        if self.at_top() and self.going_up():
+        if self.rect.clipline(game.v5_tup, game.v6_tup) and self.vel.y < 6 and self.vel.y != 0:
+            Settings.score += 5
+            self.pos.x = Settings.player_start_x
+            self.pos.y = Settings.player_start_y
+            self.vel.y = 0
+            self.vel.x = 0
+        elif self.rect.clipline(game.v7_tup, game.v8_tup) and self.vel.y < 6 and self.vel.y != 0:
+            Settings.score += 2
+            self.pos.x = Settings.player_start_x
+            self.pos.y = Settings.player_start_y
+            self.vel.y = 0
+            self.vel.x = 0 
+        elif self.rect.clipline(game.v10_tup, game.v11_tup) and self.vel.y < 6 and self.vel.y != 0:
+            Settings.score += 2
+            self.pos.x = Settings.player_start_x
+            self.pos.y = Settings.player_start_y
+            self.vel.y = 0
+            self.vel.x = 0 
+        elif self.rect.clipline(game.v12_tup, game.v13_tup) and self.vel.y < 6 and self.vel.y != 0:
+            Settings.score += 1
+            self.pos.x = Settings.player_start_x
+            self.pos.y = Settings.player_start_y
+            self.vel.y = 0
+            self.vel.x = 0 
+        elif self.rect.clipline(game.v1_tup, game.v2_tup):
+            pygame.quit()
+        elif self.rect.clipline(game.v2_tup, game.v3_tup):
+            pygame.quit()  
+        elif self.rect.clipline(game.v3_tup, game.v4_tup):
+            pygame.quit()
+        elif self.rect.clipline(game.v4_tup, game.v5_tup):
+            pygame.quit()
+        elif self.rect.clipline(game.v6_tup, game.v7_tup):
+            pygame.quit()
+        elif self.rect.clipline(game.v8_tup, game.v9_tup):
+            pygame.quit()
+        elif self.rect.clipline(game.v9_tup, game.v10_tup):
+            pygame.quit()
+        elif self.rect.clipline(game.v11_tup, game.v12_tup):
+            pygame.quit()
+        elif self.at_top() and self.going_up():
             self.vel.y = 0
 
             # If the player hits one side of the screen or the other, bounce the
