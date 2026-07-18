@@ -32,12 +32,13 @@ class Settings:
     move = pygame.Vector2(0, 1)
     fuel = 100
     score = 0
+    lines = []
 
 class Game:
     """Main object for the top level of the game. Holds the main loop and other
     update, drawing and collision methods that operate on multiple other
     objects, like the player and obstacles."""
-
+    
     def __init__(self, settings: Settings):
         pygame.init()
 
@@ -62,33 +63,32 @@ class Game:
         self.v11_tup = (470, 320)
         self.v12_tup = (530, 270)
         self.v13_tup = (600, 270)
-
-        # All terrain points in order. Built once here instead of being
-        # re-wrapped in new Vector2 objects every frame inside run().
-        self.terrain_points = [
-            self.v1_tup, self.v2_tup, self.v3_tup, self.v4_tup, self.v5_tup,
-            self.v6_tup, self.v7_tup, self.v8_tup, self.v9_tup, self.v10_tup,
-            self.v11_tup, self.v12_tup, self.v13_tup,
-        ]
-
-        # Landing pads: touching one of these while descending slowly is a
-        # safe landing worth points. These are checked before the crash walls
-        # below so that a shared endpoint (e.g. v5, which is shared between
-        # the v4-v5 wall and the v5-v6 pad) resolves as a landing rather than
-        # a crash - this matches the priority order of the original code.
-        self.landing_pads = [
-            (self.v5_tup, self.v6_tup, 5),
-            (self.v7_tup, self.v8_tup, 2),
-            (self.v10_tup, self.v11_tup, 2),
-            (self.v12_tup, self.v13_tup, 1),
-        ]
-
-        # Every other terrain segment ends the game on contact.
-        pad_segments = {(pad[0], pad[1]) for pad in self.landing_pads}
-        self.crash_walls = [
-            (a, b) for a, b in zip(self.terrain_points, self.terrain_points[1:])
-            if (a, b) not in pad_segments
-        ]
+        v1 = pygame.math.Vector2(self.v1_tup)
+        v2 = pygame.math.Vector2(self.v2_tup)
+        v3 = pygame.math.Vector2(self.v3_tup)
+        v4 = pygame.math.Vector2(self.v4_tup)
+        v5 = pygame.math.Vector2(self.v5_tup)
+        v6 = pygame.math.Vector2(self.v6_tup)
+        v7 = pygame.math.Vector2(self.v7_tup)
+        v8 = pygame.math.Vector2(self.v8_tup)
+        v9 = pygame.math.Vector2(self.v9_tup)
+        v10 = pygame.math.Vector2(self.v10_tup)
+        v11 = pygame.math.Vector2(self.v11_tup)
+        v12 = pygame.math.Vector2(self.v12_tup)
+        v13 = pygame.math.Vector2(self.v13_tup)
+        Settings.lines.append(v1)
+        Settings.lines.append(v2)
+        Settings.lines.append(v3)
+        Settings.lines.append(v4)
+        Settings.lines.append(v5)
+        Settings.lines.append(v6)
+        Settings.lines.append(v7)
+        Settings.lines.append(v8)
+        Settings.lines.append(v9)
+        Settings.lines.append(v10)
+        Settings.lines.append(v11)
+        Settings.lines.append(v12)
+        Settings.lines.append(v13)
 
     def run(self):
         """Main game loop"""
@@ -99,7 +99,7 @@ class Game:
                     self.running = False
 
             if Settings.fuel == 0:
-                self.running = False
+                pygame.quit()
             player.update()
 
             self.screen.fill(Colors.BACKGROUND_COLOR)
@@ -111,13 +111,11 @@ class Game:
             lives_text = Settings.font.render(f"Lives: {(Settings.lives)}", True, Settings.colors['black'])
             self.screen.blit(lives_text, (300, 10))
 
-            # Draw the terrain by walking the same point list used for
-            # collision, instead of manually re-listing every segment.
-            for start, end in zip(self.terrain_points, self.terrain_points[1:]):
-                pygame.draw.line(self.screen, Settings.colors['black'], start, end, 2)
+            for i, line in enumerate(Settings.lines[0:-1]):
+                pygame.draw.line(self.screen, (0,0, i), line, Settings.lines[i+1], 2)
 
             if Settings.lives == 0:
-                self.running = False
+                pygame.quit()            
             pygame.display.flip()
             self.clock.tick(self.settings.frame_rate)
         pygame.quit()
@@ -140,9 +138,9 @@ class Player(pygame.sprite.Sprite):
         self.v_jump = pygame.Vector2(0, -settings.player_jump_velocity)
 
         # Player position
-        self.pos = pygame.Vector2(settings.player_start_x,
+        self.pos = pygame.Vector2(settings.player_start_x, 
                                   settings.player_start_y if settings.player_start_y is not None else settings.height - self.height)
-
+        
         # Player's velocity
         self.vel = pygame.Vector2(settings.player_v_x, settings.player_v_y)  # Velocity vector
         #self.image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))
@@ -150,15 +148,15 @@ class Player(pygame.sprite.Sprite):
     def going_up(self):
         """Check if the player is going up"""
         return self.vel.y < 0
-
+    
     def going_down(self):
         """Check if the player is going down"""
         return self.vel.y > 0
-
+    
     def going_left(self):
         """Check if the player is going left"""
         return self.vel.x < 0
-
+    
     def going_right(self):
         """Check if the player is going right"""
         return self.vel.x > 0
@@ -166,7 +164,7 @@ class Player(pygame.sprite.Sprite):
     def at_top(self):
         """Check if the player is at the top of the screen"""
         return self.pos.y <= 0
-
+    
     def at_bottom(self):
         """Check if the player is at the bottom of the screen"""
         return self.pos.y >= self.game.settings.height - self.height
@@ -174,7 +172,7 @@ class Player(pygame.sprite.Sprite):
     def at_left(self):
         """Check if the player is at the left of the screen"""
         return self.pos.x <= 0
-
+    
     def at_right(self):
         """Check if the player is at the right of the screen"""
         return self.pos.x >= self.game.settings.width - self.width
@@ -184,35 +182,6 @@ class Player(pygame.sprite.Sprite):
         self.update_v()
         self.update_pos()
 
-    def _reset_to_start(self):
-        """Send the player back to the starting position with zero velocity."""
-        self.pos.x = self.game.settings.player_start_x
-        self.pos.y = self.game.settings.player_start_y
-        self.vel.y = 0
-        self.vel.x = 0
-
-    def _handle_terrain_collision(self):
-        """Check the player's rect against every terrain segment.
-
-        Landing on a pad while descending slowly (vel.y < 6 and not stationary)
-        awards points and resets the player. Touching any other segment ends
-        the game. Returns True if a collision was handled, so the caller can
-        skip the at_top() bounce check for this frame (matching the original
-        if/elif priority).
-        """
-        for start, end, score in self.game.landing_pads:
-            if self.rect.clipline(start, end) and self.vel.y < 6 and self.vel.y != 0:
-                Settings.score += score
-                self._reset_to_start()
-                return True
-
-        for start, end in self.game.crash_walls:
-            if self.rect.clipline(start, end):
-                self.game.running = False
-                return True
-
-        return False
-
     def update_v(self):
         """Update the player's velocity based on gravity and bounce on edges"""
         self.vel += self.game.gravity  # Add gravity to the velocity
@@ -221,25 +190,87 @@ class Player(pygame.sprite.Sprite):
         if self.at_bottom() and self.going_down():
             if self.vel.y < 6 and self.vel.y != 0.3:
                 Settings.score += 1
-                self._reset_to_start()
+                self.pos.x = Settings.player_start_x
+                self.pos.y = Settings.player_start_y
             elif self.vel.y > 6:
                 Settings.lives -= 1
-                self._reset_to_start()
+                self.pos.x = Settings.player_start_x
+                self.pos.y = Settings.player_start_y
             elif self.vel.x > 6:
                 Settings.lives -= 1
-                self._reset_to_start()
+                self.pos.x = Settings.player_start_x
+                self.pos.y = Settings.player_start_y
             self.vel.y = 0
-            self.vel.x = 0
+            self.vel.x = 0 
 
-        collided = self._handle_terrain_collision()
-        if not collided and self.at_top() and self.going_up():
+        if self.rect.clipline(game.v5_tup, game.v6_tup) and self.vel.y < 6:
+            if self.angle > -21 and self.angle < 21 and self.vel.y != 0:
+                Settings.score += 5
+                self.pos.x = Settings.player_start_x
+                self.pos.y = Settings.player_start_y
+                self.vel.y = 0
+                self.vel.x = 0
+            else:
+                self.vel.y = 0
+                self.vel.x = 0
+                Settings.lives -= 1
+        elif self.rect.clipline(game.v7_tup, game.v8_tup) and self.vel.y < 6:
+            if self.angle > -21 and self.angle < 21 and self.vel.y != 0:
+                Settings.score += 5
+                self.pos.x = Settings.player_start_x
+                self.pos.y = Settings.player_start_y
+                self.vel.y = 0
+                self.vel.x = 0
+            else:
+                self.vel.y = 0
+                self.vel.x = 0
+                Settings.lives -= 1
+        elif self.rect.clipline(game.v10_tup, game.v11_tup) and self.vel.y < 6:
+            if self.angle > -21 and self.angle < 21 and self.vel.y != 0:
+                Settings.score += 5
+                self.pos.x = Settings.player_start_x
+                self.pos.y = Settings.player_start_y
+                self.vel.y = 0
+                self.vel.x = 0
+            else:
+                self.vel.y = 0
+                self.vel.x = 0
+                Settings.lives -= 1
+        elif self.rect.clipline(game.v12_tup, game.v13_tup) and self.vel.y < 6:
+            if self.angle > -21 and self.angle < 21 and self.vel.y != 0:
+                Settings.score += 5
+                self.pos.x = Settings.player_start_x
+                self.pos.y = Settings.player_start_y
+                self.vel.y = 0
+                self.vel.x = 0
+            else:
+                self.vel.y = 0
+                self.vel.x = 0
+                Settings.lives -= 1
+        elif self.rect.clipline(game.v1_tup, game.v2_tup):
+            pygame.quit()
+        elif self.rect.clipline(game.v2_tup, game.v3_tup):
+            pygame.quit()  
+        elif self.rect.clipline(game.v3_tup, game.v4_tup):
+            pygame.quit()
+        elif self.rect.clipline(game.v4_tup, game.v5_tup):
+            pygame.quit()
+        elif self.rect.clipline(game.v6_tup, game.v7_tup):
+            pygame.quit()
+        elif self.rect.clipline(game.v8_tup, game.v9_tup):
+            pygame.quit()
+        elif self.rect.clipline(game.v9_tup, game.v10_tup):
+            pygame.quit()
+        elif self.rect.clipline(game.v11_tup, game.v12_tup):
+            pygame.quit()
+        elif self.at_top() and self.going_up():
             self.vel.y = 0
 
             # If the player hits one side of the screen or the other, bounce the
             # player. we are also checking if the player has a velocity going farther
             # off the screeen, because we don't want to bounce the player if it's
             # already going away from the edge
-        if self.at_bottom():
+        if self.at_bottom:
             drag = (0, 0)
         else:
             drag = -self.vel * 0.1
@@ -251,7 +282,7 @@ class Player(pygame.sprite.Sprite):
 
         # If the player is at the bottom, stop the player from falling and
         # stop the jump
-
+        
         if self.at_bottom():
             self.pos.y = self.game.settings.height - self.height
 
@@ -261,7 +292,7 @@ class Player(pygame.sprite.Sprite):
         # Don't let the player go off the left side of the screen
         if self.at_left():
             self.pos.x = self.game.settings.width - self.width
-
+  
         # Don't let the player go off the right side of the screen
         elif self.at_right():
             self.pos.x = 0
@@ -277,7 +308,8 @@ class Player(pygame.sprite.Sprite):
         if pygame.key.get_pressed()[pygame.K_UP]:
             self.vel -= Settings.move
             Settings.fuel -= 1
-
+        if self.rect.clipline((200, 330), (230, 330)):
+            pygame.quit()
     def draw(self, screen):
         self.image_rotated = pygame.transform.rotate(self.image, self.angle)
         screen.blit(self.image_rotated, (self.pos.x, self.pos.y))
